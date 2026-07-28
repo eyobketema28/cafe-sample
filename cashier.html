@@ -13,7 +13,6 @@
       padding-bottom: 100px;
     }
 
-    /* ----- HEADER ----- */
     .header {
       background: #ffffff;
       border-bottom: 2px solid #c9a96e;
@@ -91,7 +90,17 @@
     }
     .lang-btn:hover:not(.active) { color: #1a1a1a; }
 
-    /* ----- PASSWORD OVERLAY ----- */
+    .sync-status {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0;
+      font-family: 'Georgia', serif;
+      letter-spacing: 1px;
+    }
+    .sync-status.synced { color: #2a7a4a; }
+    .sync-status.syncing { color: #c9a96e; }
+    .sync-status.error { color: #c0392b; }
+
     .password-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -155,7 +164,6 @@
     }
     .password-box .error.show { display: block; }
 
-    /* ----- MAIN LAYOUT ----- */
     .container {
       max-width: 1400px;
       margin: 1.5rem auto;
@@ -168,7 +176,6 @@
       .container { grid-template-columns: 1fr; }
     }
 
-    /* ----- LEFT COLUMN (Menu) ----- */
     .section-title {
       font-size: 1.4rem;
       font-weight: 300;
@@ -244,7 +251,6 @@
       font-weight: 600;
     }
 
-    /* ----- RIGHT COLUMN (Cart) ----- */
     .cart-panel {
       background: #ffffff;
       border: 1px solid #e8e0d6;
@@ -324,7 +330,6 @@
       font-family: 'Georgia', serif;
     }
 
-    /* ----- CART TOTALS ----- */
     .cart-totals {
       border-top: 2px solid #e8e0d6;
       padding-top: 0.8rem;
@@ -348,7 +353,6 @@
     .total-row.grand .amount { color: #c9a96e; }
     .total-row .amount { font-weight: 500; }
 
-    /* ----- CART INPUTS ----- */
     .cart-inputs {
       margin: 0.8rem 0;
     }
@@ -390,7 +394,6 @@
       margin-top: 0.2rem;
     }
 
-    /* ----- ORDER BUTTON ----- */
     .order-btn {
       width: 100%;
       padding: 0.9rem;
@@ -411,8 +414,11 @@
       opacity: 0.4;
       cursor: not-allowed;
     }
+    .order-btn.syncing {
+      opacity: 0.6;
+      background: #888;
+    }
 
-    /* ----- QUICK STATS BAR ----- */
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -438,7 +444,6 @@
       text-transform: uppercase;
     }
 
-    /* ----- RESPONSIVE ----- */
     @media (max-width: 768px) {
       .container { padding: 0 1rem; }
       .menu-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
@@ -449,7 +454,6 @@
 </head>
 <body>
 
-<!-- ==================== PASSWORD OVERLAY ==================== -->
 <div class="password-overlay" id="passwordOverlay">
   <div class="password-box">
     <h2 id="loginTitle">🔐 THE MONOCHROME</h2>
@@ -460,10 +464,10 @@
   </div>
 </div>
 
-<!-- ==================== HEADER ==================== -->
 <div class="header" id="mainHeader" style="display:none;">
   <div class="logo"><h2>THE <span>MONOCHROME</span> · <span style="font-size:0.7rem;letter-spacing:2px;color:#888;" data-key="cashierLabel">cashier</span></h2></div>
   <div class="header-actions">
+    <span class="sync-status synced" id="syncStatus">● synced</span>
     <div class="lang-selector">
       <button class="lang-btn active" data-lang="en">EN</button>
       <button class="lang-btn" data-lang="am">አማ</button>
@@ -474,12 +478,8 @@
   </div>
 </div>
 
-<!-- ==================== MAIN ==================== -->
 <div class="container" id="mainContent" style="display:none;">
-
-  <!-- LEFT: MENU -->
   <div>
-    <!-- Stats Bar -->
     <div class="stats-bar" id="statsBar">
       <div class="stat-item"><div class="number" id="todayOrders">0</div><div class="label" data-key="todayOrdersLabel">today's orders</div></div>
       <div class="stat-item"><div class="number" id="todayRevenue">$0</div><div class="label" data-key="todayRevenueLabel">today's revenue</div></div>
@@ -490,10 +490,8 @@
     <div class="menu-grid" id="menuGrid"></div>
   </div>
 
-  <!-- RIGHT: CART -->
   <div class="cart-panel">
     <div class="cart-title">🛒 <span data-key="cartTitle">your</span> order</div>
-
     <div class="cart-items" id="cartItems">
       <div class="cart-empty" data-key="cartEmpty">— cart is empty —</div>
     </div>
@@ -523,6 +521,95 @@
 </div>
 
 <script>
+  // ==================== GITHUB CONFIG ====================
+  // ✅ YOUR CREDENTIALS ARE ALREADY SET:
+  const GIST_ID = "d2b5c83247826caa343349cca52b6313";
+  const GITHUB_TOKEN = "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";
+  const GIST_FILENAME = "monochrome_data.json";
+
+  // ==================== GITHUB SYNC FUNCTIONS ====================
+  function setSyncStatus(status, message) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    if (status === 'synced') {
+      el.className = 'sync-status synced';
+      el.textContent = '● ' + (message || 'synced');
+    } else if (status === 'syncing') {
+      el.className = 'sync-status syncing';
+      el.textContent = '⟳ ' + (message || 'syncing...');
+    } else {
+      el.className = 'sync-status error';
+      el.textContent = '✕ ' + (message || 'error');
+    }
+  }
+
+  async function readFromGist() {
+    try {
+      const url = `https://api.github.com/gists/${GIST_ID}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to read gist');
+      const data = await response.json();
+      const content = data.files[GIST_FILENAME]?.content;
+      if (!content) throw new Error('File not found');
+      return JSON.parse(content);
+    } catch (error) {
+      console.error('Read error:', error);
+      setSyncStatus('error', 'read failed');
+      return null;
+    }
+  }
+
+  async function writeToGist(data) {
+    try {
+      setSyncStatus('syncing', 'saving...');
+      const url = `https://api.github.com/gists/${GIST_ID}`;
+      const payload = {
+        files: {
+          [GIST_FILENAME]: {
+            content: JSON.stringify(data, null, 2)
+          }
+        }
+      };
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('Failed to save');
+      setSyncStatus('synced', 'saved');
+      return true;
+    } catch (error) {
+      console.error('Write error:', error);
+      setSyncStatus('error', 'save failed');
+      return false;
+    }
+  }
+
+  // ==================== DATA MANAGEMENT ====================
+  let allOrders = [];
+  let allExpenses = [];
+
+  async function loadAllData() {
+    const data = await readFromGist();
+    if (data) {
+      allOrders = data.orders || [];
+      allExpenses = data.expenses || [];
+    }
+    renderStats();
+    return data;
+  }
+
+  async function saveAllData() {
+    const data = {
+      orders: allOrders,
+      expenses: allExpenses
+    };
+    return await writeToGist(data);
+  }
+
   // ==================== TRANSLATIONS ====================
   const translations = {
     en: {
@@ -638,14 +725,12 @@
       const text = getTranslation(key);
       if (text) el.textContent = text;
     });
-    // Update placeholders
     document.querySelectorAll('[data-key]').forEach(el => {
       const key = el.getAttribute('data-key');
       if (el.tagName === 'INPUT' && el.placeholder) {
         el.placeholder = getTranslation(key) || el.placeholder;
       }
     });
-    // Update language buttons
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.lang === lang);
     });
@@ -654,7 +739,6 @@
     renderCart();
   }
 
-  // Language button listeners
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       updateUILanguage(btn.dataset.lang);
@@ -685,7 +769,7 @@
       checkPassword();
       const savedLang = localStorage.getItem('cashier_lang') || 'en';
       updateUILanguage(savedLang);
-      renderAll();
+      initCashier();
     } else {
       error.classList.add('show');
       error.textContent = getTranslation('errorPassword');
@@ -703,7 +787,7 @@
     location.reload();
   });
 
-  // ==================== DATA ====================
+  // ==================== MENU DATA ====================
   const MENU = [
     { id: "m1", name: "black truffle fries", price: 7.9, emoji: "🍟", category: "snacks" },
     { id: "m2", name: "caesar salad", price: 9.5, emoji: "🥗", category: "fresh" },
@@ -792,7 +876,7 @@
     renderAll();
   }
 
-  // ==================== RENDER ====================
+  // ==================== RENDER FUNCTIONS ====================
   function renderMenu() {
     const grid = document.getElementById('menuGrid');
     if (!grid) return;
@@ -873,11 +957,10 @@
   }
 
   function renderStats() {
-    const orders = JSON.parse(localStorage.getItem('hotel_orders') || '[]');
     const today = new Date().toISOString().split('T')[0];
-    const todayOrders = orders.filter(o => o.createdAt && o.createdAt.startsWith(today));
+    const todayOrders = allOrders.filter(o => o.createdAt && o.createdAt.startsWith(today));
     const todayRevenue = todayOrders.filter(o => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.total, 0);
-    const active = orders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length;
+    const active = allOrders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length;
 
     document.getElementById('todayOrders').textContent = todayOrders.length;
     document.getElementById('todayRevenue').textContent = `$${todayRevenue.toFixed(2)}`;
@@ -891,7 +974,7 @@
   }
 
   // ==================== PLACE ORDER ====================
-  function placeOrder() {
+  async function placeOrder() {
     if (cart.length === 0) return;
 
     const subtotal = getSubtotal();
@@ -910,18 +993,25 @@
       discountAmount: discountAmt,
       total: total,
       paymentMethod: paymentMethod,
-      paymentStatus: 'paid', // Mark as paid immediately
-      status: 'Completed', // Completed immediately for cashier
+      paymentStatus: 'paid',
+      status: 'Completed',
       createdAt: new Date().toISOString(),
       completedAt: new Date().toISOString()
     };
 
-    const orders = JSON.parse(localStorage.getItem('hotel_orders') || '[]');
-    orders.unshift(order);
-    localStorage.setItem('hotel_orders', JSON.stringify(orders));
+    // Add to local array
+    allOrders.unshift(order);
 
-    // Show receipt
-    const receipt = `
+    // Save to GitHub
+    const btn = document.getElementById('placeOrderBtn');
+    btn.disabled = true;
+    btn.textContent = '⟳ saving...';
+    btn.className = 'order-btn syncing';
+
+    const saved = await saveAllData();
+
+    if (saved) {
+      const receipt = `
 ${getTranslation('receipt')}
 ────────────────
 ${order.items.map(i => `${i.name} x${i.quantity}  $${(i.price*i.quantity).toFixed(2)}`).join('\n')}
@@ -933,10 +1023,16 @@ ${getTranslation('totalLabel')}:      $${total.toFixed(2)}
 ${getTranslation('paymentCash')}:    ${paymentMethod}
 ────────────────
 ${getTranslation('receiptThankYou')}
-    `;
-    alert(receipt);
+      `;
+      alert(receipt);
+      clearCart();
+    } else {
+      alert('❌ Failed to save order to GitHub. Please check your internet and try again.');
+      // Remove from local array if save failed
+      allOrders.shift();
+    }
 
-    clearCart();
+    btn.className = 'order-btn';
     renderAll();
   }
 
@@ -960,6 +1056,15 @@ ${getTranslation('receiptThankYou')}
     renderCart();
   }
 
+  // ==================== INIT ====================
+  async function initCashier() {
+    loadCart();
+    await loadAllData();
+    renderAll();
+    // Auto-refresh stats every 10s
+    setInterval(loadAllData, 10000);
+  }
+
   // ==================== EVENT LISTENERS ====================
   document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
   document.getElementById('applyDiscountBtn').addEventListener('click', applyDiscount);
@@ -967,21 +1072,11 @@ ${getTranslation('receiptThankYou')}
     if (e.key === 'Enter') applyDiscount();
   });
 
-  // ==================== STORAGE SYNC ====================
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'hotel_orders' || e.key === 'cashier_cart') {
-      renderAll();
-    }
-  });
-
-  // ==================== INIT ====================
+  // ==================== START ====================
   if (checkPassword()) {
     const savedLang = localStorage.getItem('cashier_lang') || 'en';
     updateUILanguage(savedLang);
-    loadCart();
-    renderAll();
-    // Auto-refresh stats every 5s
-    setInterval(renderStats, 5000);
+    initCashier();
   }
 </script>
 </body>
