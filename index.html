@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Monochrome | Luxury Dining</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f5f5f5;
+      color: #1a1a1a;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      line-height: 1.6;
+    }
+    .header {
+      background: #ffffff;
+      border-bottom: 2px solid #c9a96e;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    }
+    .logo h1 {
+      font-size: 1.8rem;
+      font-weight: 300;
+      letter-spacing: 4px;
+      color: #1a1a1a;
+      font-family: 'Georgia', serif;
+    }
+    .logo h1 span { color: #c9a96e; }
+    .logo p {
+      font-size: 0.7rem;
+      color: #999;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 0.2rem;
+    }
+    .lang-selector {
+      display: flex;
+      gap: 0.3rem;
+      background: #f8f6f1;
+      padding: 0.3rem;
+      border: 1px solid #e0d6c8;
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: #888;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+    }
+    .lang-btn.active {
+      background: #c9a96e;
+      color: white;
+    }
+    .lang-btn:hover:not(.active) { color: #1a1a1a; }
+
+    .slideshow-container {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      overflow: hidden;
+      background: #1a1a1a;
+    }
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .slide.active { opacity: 1; }
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3);
+    }
+    .slide-caption {
+      position: absolute;
+      bottom: 80px;
+      left: 0; right: 0;
+      text-align: center;
+      color: white;
+      z-index: 10;
+      padding: 0 2rem;
+    }
+    .slide-caption h2 {
+      font-size: 2.8rem;
+      font-weight: 300;
+      letter-spacing: 6px;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      font-family: 'Georgia', serif;
+    }
+    .slide-caption p {
+      font-size: 1rem;
+      letter-spacing: 3px;
+      opacity: 0.9;
+      text-shadow: 0 1px 10px rgba(0,0,0,0.5);
+      margin-top: 0.5rem;
+    }
+    .slide-nav {
+      position: absolute;
+      bottom: 20px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      z-index: 10;
+    }
+    .slide-dot {
+      width: 8px;
+      height: 8px;
+      background: rgba(255,255,255,0.4);
+      cursor: pointer;
+      transition: all 0.3s;
+      border-radius: 50%;
+    }
+    .slide-dot.active {
+      background: #c9a96e;
+      width: 24px;
+      border-radius: 4px;
+    }
+    .slide-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.3);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      z-index: 10;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+    }
+    .slide-arrow:hover {
+      background: rgba(201,169,110,0.6);
+      border-color: #c9a96e;
+    }
+    .slide-arrow.prev { left: 20px; }
+    .slide-arrow.next { right: 20px; }
+
+    .container {
+      max-width: 1280px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 300;
+      margin-bottom: 2rem;
+      border-left: 3px solid #c9a96e;
+      padding-left: 1.2rem;
+      color: #1a1a1a;
+      font-family: 'Georgia', serif;
+      letter-spacing: 1px;
+    }
+    .section-title span { color: #c9a96e; }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    .menu-card {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      position: relative;
+    }
+    .menu-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #c9a96e;
+      transform: scaleX(0);
+      transition: transform 0.4s ease;
+    }
+    .menu-card:hover::after { transform: scaleX(1); }
+    .menu-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      border-color: #c9a96e;
+    }
+    .menu-img {
+      background: #faf8f5;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 3rem;
+      border-bottom: 1px solid #f0ebe4;
+    }
+    .menu-info {
+      padding: 1.2rem 1.2rem 1.5rem;
+    }
+    .menu-title {
+      font-size: 1rem;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.4rem;
+      font-family: 'Georgia', serif;
+    }
+    .price {
+      font-weight: 400;
+      color: #c9a96e;
+      font-size: 0.9rem;
+      font-family: 'Georgia', serif;
+    }
+    .desc {
+      color: #888;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      margin-bottom: 0.8rem;
+      font-family: 'Georgia', serif;
+    }
+    .badge {
+      display: inline-block;
+      background: #f5f0ea;
+      padding: 0.1rem 0.8rem;
+      font-size: 0.6rem;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: 'Georgia', serif;
+    }
+
+    .admin-bar {
+      text-align: center;
+      padding: 2rem 0 1rem;
+      border-top: 1px solid #e8e0d6;
+      margin-top: 2rem;
+    }
+    .admin-bar a {
+      display: inline-block;
+      background: #1a1a1a;
+      color: white;
+      padding: 0.6rem 2rem;
+      text-decoration: none;
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+      margin: 0 0.5rem;
+    }
+    .admin-bar a:hover { background: #c9a96e; }
+    .admin-bar a.gold { background: #c9a96e; }
+    .admin-bar a.gold:hover { background: #1a1a1a; }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid #e8e0d6;
+      color: #bbb;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      font-family: 'Georgia', serif;
+    }
+    .footer span { color: #c9a96e; }
+
+    @media (max-width: 768px) {
+      .slideshow-container { height: 300px; }
+      .slide-caption h2 { font-size: 1.5rem; letter-spacing: 3px; }
+      .header { padding: 1rem; }
+      .logo h1 { font-size: 1.2rem; letter-spacing: 2px; }
+      .section-title { font-size: 1.3rem; }
+      .admin-bar a { padding: 0.4rem 1rem; font-size: 0.6rem; margin: 0.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <h1>THE <span>MONOCHROME</span></h1>
+    <p>kitchen · bar · rooms</p>
+  </div>
+  <div class="lang-selector">
+    <button class="lang-btn active" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="am">አማ</button>
+    <button class="lang-btn" data-lang="ar">ع</button>
+  </div>
+</div>
+
+<div class="slideshow-container">
+  <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=500&fit=crop');">
+    <div class="slide-caption"><h2 data-key="slide1">✦ EXCEPTIONAL DINING ✦</h2><p data-key="slide1sub">seasonal ingredients, crafted with care</p></div>
+  </div>
+  <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1555244162-803834f70033?w=1200&h=500&fit=crop');">
+    <div class="slide-caption"><h2 data-key="slide2">✦ ROOM SERVICE ✦</h2><p data-key="slide2sub">enjoy your meal in the comfort of your room</p></div>
+  </div>
+  <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=500&fit=crop');">
+    <div class="slide-caption"><h2 data-key="slide3">✦ TABLE SERVICE ✦</h2><p data-key="slide3sub">dine with us — warm atmosphere</p></div>
+  </div>
+  <button class="slide-arrow prev" id="prevSlide">❮</button>
+  <button class="slide-arrow next" id="nextSlide">❯</button>
+  <div class="slide-nav" id="slideNav"></div>
+</div>
+
+<div class="container">
+  <div class="section-title" data-key="menuTitle">◈ <span>tonight's</span> menu</div>
+  <div class="menu-grid" id="menuGrid"></div>
+  <div class="admin-bar">
+    <a href="cashier.html" class="gold">💳 cashier</a>
+    <a href="manager.html">📊 manager</a>
+  </div>
+</div>
+
+<div class="footer">
+  <p>THE <span>MONOCHROME</span> — good food, simple service</p>
+</div>
+
+<script>
+  const translations = {
+    en: {
+      menuTitle: '◈ <span>tonight\'s</span> menu',
+      slide1: '✦ EXCEPTIONAL DINING ✦',
+      slide1sub: 'seasonal ingredients, crafted with care',
+      slide2: '✦ ROOM SERVICE ✦',
+      slide2sub: 'enjoy your meal in the comfort of your room',
+      slide3: '✦ TABLE SERVICE ✦',
+      slide3sub: 'dine with us — warm atmosphere',
+      menuItems: {
+        'black truffle fries': 'black truffle fries',
+        'caesar salad': 'caesar salad',
+        'grilled salmon': 'grilled salmon',
+        'classic burger': 'classic burger',
+        'margherita pizza': 'margherita pizza',
+        'cheesecake': 'cheesecake',
+        'dark chocolate cake': 'dark chocolate cake',
+        'fresh orange juice': 'fresh orange juice',
+        'cappuccino': 'cappuccino',
+        'negroni': 'negroni'
+      }
+    },
+    am: {
+      menuTitle: '◈ <span>የዛሬ</span> ምናሌ',
+      slide1: '✦ ልዩ ምግብ አገልግሎት ✦',
+      slide1sub: 'ወቅታዊ ንጥረ ነገሮች፣ በጥንቃቄ የተዘጋጁ',
+      slide2: '✦ የክፍል አገልግሎት ✦',
+      slide2sub: 'በክፍልዎ ውስጥ ምግብዎን ይደሰቱ',
+      slide3: '✦ የጠረጴዛ አገልግሎት ✦',
+      slide3sub: 'ከእኛ ጋር ይመገቡ — ሞቅ ያለ ሁኔታ',
+      menuItems: {
+        'black truffle fries': 'ጥቁር ትራፍል ጥብስ',
+        'caesar salad': 'ቄሳር ሰላጣ',
+        'grilled salmon': 'የተጠበሰ ሳልሞን',
+        'classic burger': 'ክላሲክ በርገር',
+        'margherita pizza': 'ማርጌሪታ ፒዛ',
+        'cheesecake': 'ቺዝኬክ',
+        'dark chocolate cake': 'ጥቁር ቸኮሌት ኬክ',
+        'fresh orange juice': 'ትኩስ ብርቱካን ጭማቂ',
+        'cappuccino': 'ካፑቺኖ',
+        'negroni': 'ኔግሮኒ'
+      }
+    },
+    ar: {
+      menuTitle: '◈ <span>قائمة</span> الليلة',
+      slide1: '✦ تناول الطعام الاستثنائي ✦',
+      slide1sub: 'مكونات موسمية، محضرة بعناية',
+      slide2: '✦ خدمة الغرف ✦',
+      slide2sub: 'استمتع بوجبتك في راحة غرفتك',
+      slide3: '✦ خدمة الطاولات ✦',
+      slide3sub: 'تناول الطعام معنا — أجواء دافئة',
+      menuItems: {
+        'black truffle fries': 'بطاطس مقلية بالكمأة السوداء',
+        'caesar salad': 'سلطة قيصر',
+        'grilled salmon': 'سمك السلمون المشوي',
+        'classic burger': 'برغر كلاسيكي',
+        'margherita pizza': 'بيتزا مارجريتا',
+        'cheesecake': 'تشيز كيك',
+        'dark chocolate cake': 'كعكة الشوكولاتة الداكنة',
+        'fresh orange juice': 'عصير برتقال طازج',
+        'cappuccino': 'كابتشينو',
+        'negroni': 'نيجروني'
+      }
+    }
+  };
+
+  const MENU = [
+    { id: "m1", name: "black truffle fries", price: 7.9, description: "crispy, parmesan, truffle oil", emoji: "🍟", category: "snacks" },
+    { id: "m2", name: "caesar salad", price: 9.5, description: "romaine, parmesan, house dressing", emoji: "🥗", category: "fresh" },
+    { id: "m3", name: "grilled salmon", price: 26.5, description: "lemon butter, seasonal vegetables", emoji: "🐟", category: "mains" },
+    { id: "m4", name: "classic burger", price: 18.9, description: "angus beef, cheddar, house sauce", emoji: "🍔", category: "mains" },
+    { id: "m5", name: "margherita pizza", price: 15.5, description: "tomato, mozzarella, basil", emoji: "🍕", category: "mains" },
+    { id: "m6", name: "cheesecake", price: 7.5, description: "new york style, berry compote", emoji: "🍰", category: "sweets" },
+    { id: "m7", name: "dark chocolate cake", price: 8.5, description: "warm, with vanilla ice cream", emoji: "🍫", category: "sweets" },
+    { id: "m8", name: "fresh orange juice", price: 4.5, description: "cold pressed", emoji: "🍊", category: "drinks" },
+    { id: "m9", name: "cappuccino", price: 4.2, description: "arabica roast", emoji: "☕", category: "drinks" },
+    { id: "m10", name: "negroni", price: 11.0, description: "campari, gin, vermouth", emoji: "🥃", category: "cocktails" }
+  ];
+
+  let currentLang = 'en';
+
+  function renderMenu(lang) {
+    const grid = document.getElementById("menuGrid");
+    if (!grid) return;
+    const t = translations[lang] || translations.en;
+    grid.innerHTML = "";
+    MENU.forEach(item => {
+      const translatedName = t.menuItems[item.name] || item.name;
+      const card = document.createElement("div");
+      card.className = "menu-card";
+      card.innerHTML = `
+        <div class="menu-img">${item.emoji}</div>
+        <div class="menu-info">
+          <div class="menu-title">
+            <span>${translatedName}</span>
+            <span class="price">$${item.price.toFixed(2)}</span>
+          </div>
+          <div class="desc">${item.description}</div>
+          <span class="badge">${item.category}</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+
+  function showSlide(index) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    const dots = document.querySelectorAll('.slide-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    currentSlide = index;
+  }
+
+  function nextSlide() { showSlide((currentSlide + 1) % totalSlides); }
+  function prevSlide() { showSlide((currentSlide - 1 + totalSlides) % totalSlides); }
+
+  const nav = document.getElementById('slideNav');
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = `slide-dot ${i === 0 ? 'active' : ''}`;
+    dot.addEventListener('click', () => { clearInterval(autoInterval); showSlide(i); autoInterval = setInterval(nextSlide, 5000); });
+    nav.appendChild(dot);
+  }
+
+  let autoInterval = setInterval(nextSlide, 5000);
+  const container = document.querySelector('.slideshow-container');
+  container.addEventListener('mouseenter', () => clearInterval(autoInterval));
+  container.addEventListener('mouseleave', () => { autoInterval = setInterval(nextSlide, 5000); });
+  document.getElementById('prevSlide').addEventListener('click', () => { clearInterval(autoInterval); prevSlide(); autoInterval = setInterval(nextSlide, 5000); });
+  document.getElementById('nextSlide').addEventListener('click', () => { clearInterval(autoInterval); nextSlide(); autoInterval = setInterval(nextSlide, 5000); });
+
+  function updateLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang] || translations.en;
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      if (t[key]) el.innerHTML = t[key];
+    });
+    const titleEl = document.querySelector('.section-title');
+    if (titleEl && t.menuTitle) titleEl.innerHTML = t.menuTitle;
+    renderMenu(lang);
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    localStorage.setItem('monochrome_lang', lang);
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => { updateLanguage(btn.dataset.lang); });
+  });
+
+  const savedLang = localStorage.getItem('monochrome_lang') || 'en';
+  updateLanguage(savedLang);
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'monochrome_lang') { updateLanguage(e.newValue || 'en'); }
+  });
+</script>
+</body>
+</html>

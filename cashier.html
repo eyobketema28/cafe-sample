@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Monochrome | Cashier</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f5f5f5;
+      color: #1a1a1a;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      padding-bottom: 100px;
+    }
+
+    /* ----- HEADER ----- */
+    .header {
+      background: #ffffff;
+      border-bottom: 2px solid #c9a96e;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    }
+    .logo h2 {
+      font-weight: 300;
+      letter-spacing: 3px;
+      font-family: 'Georgia', serif;
+    }
+    .logo h2 span { color: #c9a96e; }
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .back-btn {
+      background: transparent;
+      border: 1px solid #d4d4d4;
+      padding: 0.4rem 1.2rem;
+      text-decoration: none;
+      color: #1a1a1a;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+    }
+    .back-btn:hover {
+      background: #1a1a1a;
+      color: white;
+      border-color: #1a1a1a;
+    }
+    .logout-btn {
+      background: #c9a96e;
+      border: none;
+      color: white;
+      padding: 0.4rem 1.2rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+    }
+    .logout-btn:hover {
+      background: #1a1a1a;
+    }
+    .lang-selector {
+      display: flex;
+      gap: 0.2rem;
+      background: #f8f6f1;
+      padding: 0.2rem;
+      border: 1px solid #e0d6c8;
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 500;
+      color: #888;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+    }
+    .lang-btn.active {
+      background: #c9a96e;
+      color: white;
+    }
+    .lang-btn:hover:not(.active) { color: #1a1a1a; }
+
+    /* ----- PASSWORD OVERLAY ----- */
+    .password-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .password-overlay.hidden { display: none; }
+    .password-box {
+      background: white;
+      padding: 3rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      border: 2px solid #c9a96e;
+    }
+    .password-box h2 {
+      font-weight: 300;
+      letter-spacing: 3px;
+      margin-bottom: 0.5rem;
+      font-family: 'Georgia', serif;
+    }
+    .password-box p {
+      color: #888;
+      font-size: 0.8rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Georgia', serif;
+    }
+    .password-box input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #d4d4d4;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      font-family: 'Georgia', serif;
+      text-align: center;
+      letter-spacing: 4px;
+    }
+    .password-box button {
+      width: 100%;
+      padding: 0.8rem;
+      background: #1a1a1a;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+    }
+    .password-box button:hover {
+      background: #c9a96e;
+    }
+    .password-box .error {
+      color: #c0392b;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .password-box .error.show { display: block; }
+
+    /* ----- MAIN LAYOUT ----- */
+    .container {
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 2rem;
+    }
+    @media (max-width: 1024px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* ----- LEFT COLUMN (Menu) ----- */
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 300;
+      margin-bottom: 1.5rem;
+      border-left: 3px solid #c9a96e;
+      padding-left: 1rem;
+      font-family: 'Georgia', serif;
+    }
+    .section-title span { color: #c9a96e; }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.2rem;
+    }
+    .menu-card {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .menu-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: #c9a96e;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    .menu-card:hover::after { transform: scaleX(1); }
+    .menu-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      border-color: #c9a96e;
+    }
+    .menu-img {
+      background: #faf8f5;
+      padding: 1rem;
+      text-align: center;
+      font-size: 2.2rem;
+      border-bottom: 1px solid #f0ebe4;
+    }
+    .menu-info {
+      padding: 0.8rem 1rem 1rem;
+    }
+    .menu-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+      font-family: 'Georgia', serif;
+    }
+    .menu-price {
+      color: #c9a96e;
+      font-size: 0.85rem;
+      font-family: 'Georgia', serif;
+    }
+    .menu-card .qty-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #c9a96e;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* ----- RIGHT COLUMN (Cart) ----- */
+    .cart-panel {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      padding: 1.5rem;
+      position: sticky;
+      top: 1.5rem;
+      max-height: calc(100vh - 120px);
+      display: flex;
+      flex-direction: column;
+    }
+    .cart-title {
+      font-size: 1.1rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid #e8e0d6;
+      font-family: 'Georgia', serif;
+    }
+    .cart-title span { color: #c9a96e; }
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      margin: 0.8rem 0;
+      max-height: 300px;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f0ebe4;
+      font-size: 0.85rem;
+      font-family: 'Georgia', serif;
+    }
+    .cart-item-name { flex: 1; }
+    .cart-item-qty {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0.8rem;
+    }
+    .cart-item-qty button {
+      background: #f5f0ea;
+      border: none;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      font-family: 'Georgia', serif;
+    }
+    .cart-item-qty button:hover {
+      background: #c9a96e;
+      color: white;
+    }
+    .cart-item-price {
+      color: #c9a96e;
+      min-width: 60px;
+      text-align: right;
+    }
+    .cart-item-remove {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 0.2rem;
+      transition: color 0.2s;
+      font-family: 'Georgia', serif;
+    }
+    .cart-item-remove:hover { color: #c0392b; }
+
+    .cart-empty {
+      color: #bbb;
+      text-align: center;
+      padding: 2rem 0;
+      font-family: 'Georgia', serif;
+    }
+
+    /* ----- CART TOTALS ----- */
+    .cart-totals {
+      border-top: 2px solid #e8e0d6;
+      padding-top: 0.8rem;
+      margin-top: 0.5rem;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      font-size: 0.85rem;
+      font-family: 'Georgia', serif;
+    }
+    .total-row.grand {
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-top: 2px solid #c9a96e;
+      padding-top: 0.8rem;
+      margin-top: 0.3rem;
+      color: #1a1a1a;
+    }
+    .total-row.grand .amount { color: #c9a96e; }
+    .total-row .amount { font-weight: 500; }
+
+    /* ----- CART INPUTS ----- */
+    .cart-inputs {
+      margin: 0.8rem 0;
+    }
+    .cart-inputs select,
+    .cart-inputs input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #d4d4d4;
+      margin-bottom: 0.5rem;
+      font-family: 'Georgia', serif;
+      background: white;
+      font-size: 0.8rem;
+    }
+    .cart-inputs .discount-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .cart-inputs .discount-row input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .cart-inputs .discount-row button {
+      padding: 0.6rem 1rem;
+      background: #f5f0ea;
+      border: 1px solid #d4d4d4;
+      cursor: pointer;
+      font-family: 'Georgia', serif;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .cart-inputs .discount-row button:hover {
+      background: #c9a96e;
+      color: white;
+      border-color: #c9a96e;
+    }
+    .discount-info {
+      font-size: 0.7rem;
+      color: #c9a96e;
+      margin-top: 0.2rem;
+    }
+
+    /* ----- ORDER BUTTON ----- */
+    .order-btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: #c9a96e;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+      margin-top: 0.5rem;
+    }
+    .order-btn:hover {
+      background: #1a1a1a;
+    }
+    .order-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ----- QUICK STATS BAR ----- */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+    }
+    .stat-item {
+      text-align: center;
+      font-family: 'Georgia', serif;
+    }
+    .stat-item .number {
+      font-size: 1.6rem;
+      font-weight: 300;
+      color: #c9a96e;
+    }
+    .stat-item .label {
+      font-size: 0.65rem;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ----- RESPONSIVE ----- */
+    @media (max-width: 768px) {
+      .container { padding: 0 1rem; }
+      .menu-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .cart-panel { position: fixed; bottom: 0; left: 0; right: 0; max-height: 60vh; top: auto; border-top: 2px solid #c9a96e; z-index: 100; }
+      body { padding-bottom: 60vh; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== PASSWORD OVERLAY ==================== -->
+<div class="password-overlay" id="passwordOverlay">
+  <div class="password-box">
+    <h2 id="loginTitle">🔐 THE MONOCHROME</h2>
+    <p id="loginSub">cashier access</p>
+    <input type="password" id="passwordInput" placeholder="••••••" maxlength="20">
+    <button id="unlockBtn" data-key="unlockBtn">unlock</button>
+    <div class="error" id="passwordError">incorrect password</div>
+  </div>
+</div>
+
+<!-- ==================== HEADER ==================== -->
+<div class="header" id="mainHeader" style="display:none;">
+  <div class="logo"><h2>THE <span>MONOCHROME</span> · <span style="font-size:0.7rem;letter-spacing:2px;color:#888;" data-key="cashierLabel">cashier</span></h2></div>
+  <div class="header-actions">
+    <div class="lang-selector">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="am">አማ</button>
+      <button class="lang-btn" data-lang="ar">ع</button>
+    </div>
+    <a href="index.html" class="back-btn" data-key="backBtn">← menu</a>
+    <button class="logout-btn" id="logoutBtn" data-key="lockBtn">lock</button>
+  </div>
+</div>
+
+<!-- ==================== MAIN ==================== -->
+<div class="container" id="mainContent" style="display:none;">
+
+  <!-- LEFT: MENU -->
+  <div>
+    <!-- Stats Bar -->
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-item"><div class="number" id="todayOrders">0</div><div class="label" data-key="todayOrdersLabel">today's orders</div></div>
+      <div class="stat-item"><div class="number" id="todayRevenue">$0</div><div class="label" data-key="todayRevenueLabel">today's revenue</div></div>
+      <div class="stat-item"><div class="number" id="activeOrders">0</div><div class="label" data-key="activeOrdersLabel">active orders</div></div>
+    </div>
+
+    <div class="section-title">◈ <span data-key="menuTitle">menu</span></div>
+    <div class="menu-grid" id="menuGrid"></div>
+  </div>
+
+  <!-- RIGHT: CART -->
+  <div class="cart-panel">
+    <div class="cart-title">🛒 <span data-key="cartTitle">your</span> order</div>
+
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty" data-key="cartEmpty">— cart is empty —</div>
+    </div>
+
+    <div class="cart-totals">
+      <div class="total-row"><span data-key="subtotalLabel">subtotal</span><span class="amount" id="subtotal">$0.00</span></div>
+      <div class="total-row"><span data-key="taxLabel">tax (8%)</span><span class="amount" id="taxAmount">$0.00</span></div>
+      <div class="total-row" id="discountRow" style="display:none;"><span data-key="discountLabel">discount</span><span class="amount" id="discountAmount">-$0.00</span></div>
+      <div class="total-row grand"><span data-key="totalLabel">total</span><span class="amount" id="grandTotal">$0.00</span></div>
+    </div>
+
+    <div class="cart-inputs">
+      <select id="paymentMethod">
+        <option value="cash" data-key="paymentCash">Cash</option>
+        <option value="card" data-key="paymentCard">Card</option>
+        <option value="room" data-key="paymentRoom">Room Charge</option>
+      </select>
+      <div class="discount-row">
+        <input type="text" id="discountCode" placeholder="discount code (welcome10 / vip20)" data-key="discountPlaceholder">
+        <button id="applyDiscountBtn" data-key="applyBtn">apply</button>
+      </div>
+      <div class="discount-info" id="discountInfo"></div>
+    </div>
+
+    <button class="order-btn" id="placeOrderBtn" disabled data-key="orderBtnPlaceholder">— add items to start —</button>
+  </div>
+</div>
+
+<script>
+  // ==================== TRANSLATIONS ====================
+  const translations = {
+    en: {
+      loginTitle: '🔐 THE MONOCHROME',
+      loginSub: 'cashier access',
+      unlockBtn: 'unlock',
+      cashierLabel: 'cashier',
+      backBtn: '← menu',
+      lockBtn: 'lock',
+      todayOrdersLabel: "today's orders",
+      todayRevenueLabel: "today's revenue",
+      activeOrdersLabel: 'active orders',
+      menuTitle: 'menu',
+      cartTitle: 'your',
+      cartEmpty: '— cart is empty —',
+      subtotalLabel: 'subtotal',
+      taxLabel: 'tax (8%)',
+      discountLabel: 'discount',
+      totalLabel: 'total',
+      paymentCash: 'Cash',
+      paymentCard: 'Card',
+      paymentRoom: 'Room Charge',
+      discountPlaceholder: 'discount code (welcome10 / vip20)',
+      applyBtn: 'apply',
+      orderBtnPlaceholder: '— add items to start —',
+      orderBtnReady: '✓ complete order · $',
+      receipt: '🧾 THE MONOCHROME',
+      receiptThankYou: 'thank you!',
+      errorPassword: 'incorrect password',
+      invalidCode: '✗ invalid code',
+      discountApplied: '✓ {code} · {percent}% off applied',
+      orderPlaced: 'Order placed successfully!',
+      addItems: '— add items to start —'
+    },
+    am: {
+      loginTitle: '🔐 ዘ ሞኖክሮም',
+      loginSub: 'የገንዘብ ተቀባይ መግቢያ',
+      unlockBtn: 'ክፈት',
+      cashierLabel: 'ገንዘብ ተቀባይ',
+      backBtn: '← ምናሌ',
+      lockBtn: 'ቆልፍ',
+      todayOrdersLabel: 'የዛሬ ትዕዛዞች',
+      todayRevenueLabel: 'የዛሬ ገቢ',
+      activeOrdersLabel: 'በመስራት ላይ',
+      menuTitle: 'ምናሌ',
+      cartTitle: 'የእርስዎ',
+      cartEmpty: '— ካርቱ ባዶ ነው —',
+      subtotalLabel: 'ንዑስ ድምር',
+      taxLabel: 'ታክስ (8%)',
+      discountLabel: 'ቅናሽ',
+      totalLabel: 'ድምር',
+      paymentCash: 'ጥሬ ገንዘብ',
+      paymentCard: 'ካርድ',
+      paymentRoom: 'ክፍል ክፍያ',
+      discountPlaceholder: 'የቅናሽ ኮድ (welcome10 / vip20)',
+      applyBtn: 'ተግብር',
+      orderBtnPlaceholder: '— እቃዎችን ይጨምሩ —',
+      orderBtnReady: '✓ ትዕዛዝ ያጠናቅቁ · $',
+      receipt: '🧾 ዘ ሞኖክሮም',
+      receiptThankYou: 'እናመሰግናለን!',
+      errorPassword: 'የይለፍ ቃል ተሳስቷል',
+      invalidCode: '✗ ልክ ያልሆነ ኮድ',
+      discountApplied: '✓ {code} · {percent}% ቅናሽ ተተግብሯል',
+      orderPlaced: 'ትዕዛዝ በተሳካ ሁኔታ ተሰርቷል!',
+      addItems: '— እቃዎችን ይጨምሩ —'
+    },
+    ar: {
+      loginTitle: '🔐 ذا مونوكروم',
+      loginSub: 'دخول الصراف',
+      unlockBtn: 'فتح',
+      cashierLabel: 'صراف',
+      backBtn: '← القائمة',
+      lockBtn: 'قفل',
+      todayOrdersLabel: 'طلبات اليوم',
+      todayRevenueLabel: 'إيرادات اليوم',
+      activeOrdersLabel: 'الطلبات النشطة',
+      menuTitle: 'القائمة',
+      cartTitle: 'طلبك',
+      cartEmpty: '— السلة فارغة —',
+      subtotalLabel: 'المجموع الفرعي',
+      taxLabel: 'الضريبة (8%)',
+      discountLabel: 'خصم',
+      totalLabel: 'الإجمالي',
+      paymentCash: 'نقدي',
+      paymentCard: 'بطاقة',
+      paymentRoom: 'شحن الغرفة',
+      discountPlaceholder: 'رمز الخصم (welcome10 / vip20)',
+      applyBtn: 'تطبيق',
+      orderBtnPlaceholder: '— أضف عناصر للبدء —',
+      orderBtnReady: '✓ إتمام الطلب · $',
+      receipt: '🧾 ذا مونوكروم',
+      receiptThankYou: 'شكراً لك!',
+      errorPassword: 'كلمة المرور غير صحيحة',
+      invalidCode: '✗ رمز غير صالح',
+      discountApplied: '✓ {code} · خصم {percent}% مطبق',
+      orderPlaced: 'تم تقديم الطلب بنجاح!',
+      addItems: '— أضف عناصر للبدء —'
+    }
+  };
+
+  // ==================== PASSWORD ====================
+  const CASHIER_PASSWORD = "monochrome2024";
+  let currentLang = 'en';
+
+  function getTranslation(key) {
+    return translations[currentLang]?.[key] || key;
+  }
+
+  function updateUILanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      const text = getTranslation(key);
+      if (text) el.textContent = text;
+    });
+    // Update placeholders
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      if (el.tagName === 'INPUT' && el.placeholder) {
+        el.placeholder = getTranslation(key) || el.placeholder;
+      }
+    });
+    // Update language buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    localStorage.setItem('cashier_lang', lang);
+    renderMenu();
+    renderCart();
+  }
+
+  // Language button listeners
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      updateUILanguage(btn.dataset.lang);
+    });
+  });
+
+  function checkPassword() {
+    const overlay = document.getElementById('passwordOverlay');
+    const mainHeader = document.getElementById('mainHeader');
+    const mainContent = document.getElementById('mainContent');
+    const saved = sessionStorage.getItem('cashier_auth');
+
+    if (saved === 'authenticated') {
+      overlay.classList.add('hidden');
+      mainHeader.style.display = 'flex';
+      mainContent.style.display = 'grid';
+      return true;
+    }
+    return false;
+  }
+
+  document.getElementById('unlockBtn').addEventListener('click', () => {
+    const input = document.getElementById('passwordInput');
+    const error = document.getElementById('passwordError');
+    if (input.value === CASHIER_PASSWORD) {
+      sessionStorage.setItem('cashier_auth', 'authenticated');
+      error.classList.remove('show');
+      checkPassword();
+      const savedLang = localStorage.getItem('cashier_lang') || 'en';
+      updateUILanguage(savedLang);
+      renderAll();
+    } else {
+      error.classList.add('show');
+      error.textContent = getTranslation('errorPassword');
+      input.value = '';
+      input.focus();
+    }
+  });
+
+  document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('unlockBtn').click();
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('cashier_auth');
+    location.reload();
+  });
+
+  // ==================== DATA ====================
+  const MENU = [
+    { id: "m1", name: "black truffle fries", price: 7.9, emoji: "🍟", category: "snacks" },
+    { id: "m2", name: "caesar salad", price: 9.5, emoji: "🥗", category: "fresh" },
+    { id: "m3", name: "grilled salmon", price: 26.5, emoji: "🐟", category: "mains" },
+    { id: "m4", name: "classic burger", price: 18.9, emoji: "🍔", category: "mains" },
+    { id: "m5", name: "margherita pizza", price: 15.5, emoji: "🍕", category: "mains" },
+    { id: "m6", name: "cheesecake", price: 7.5, emoji: "🍰", category: "sweets" },
+    { id: "m7", name: "dark chocolate cake", price: 8.5, emoji: "🍫", category: "sweets" },
+    { id: "m8", name: "fresh orange juice", price: 4.5, emoji: "🍊", category: "drinks" },
+    { id: "m9", name: "cappuccino", price: 4.2, emoji: "☕", category: "drinks" },
+    { id: "m10", name: "negroni", price: 11.0, emoji: "🥃", category: "cocktails" }
+  ];
+
+  const TAX_RATE = 0.08;
+  const DISCOUNTS = { welcome10: 10, vip20: 20 };
+
+  let cart = [];
+  let discountPercent = 0;
+  let discountCode = '';
+
+  // ==================== CART FUNCTIONS ====================
+  function loadCart() {
+    const saved = localStorage.getItem('cashier_cart');
+    if (saved) {
+      try { cart = JSON.parse(saved); } catch (e) { cart = []; }
+    }
+  }
+
+  function saveCart() {
+    localStorage.setItem('cashier_cart', JSON.stringify(cart));
+  }
+
+  function getSubtotal() {
+    return cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  }
+
+  function getTax() {
+    return getSubtotal() * TAX_RATE;
+  }
+
+  function getDiscountAmount() {
+    return getSubtotal() * (discountPercent / 100);
+  }
+
+  function getTotal() {
+    return getSubtotal() + getTax() - getDiscountAmount();
+  }
+
+  function addToCart(item) {
+    const existing = cart.find(i => i.id === item.id);
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ ...item, quantity: 1 });
+    }
+    saveCart();
+    renderAll();
+  }
+
+  function updateQty(id, delta) {
+    const idx = cart.findIndex(i => i.id === id);
+    if (idx === -1) return;
+    const newQty = cart[idx].quantity + delta;
+    if (newQty <= 0) {
+      cart.splice(idx, 1);
+    } else {
+      cart[idx].quantity = newQty;
+    }
+    saveCart();
+    renderAll();
+  }
+
+  function removeItem(id) {
+    cart = cart.filter(i => i.id !== id);
+    saveCart();
+    renderAll();
+  }
+
+  function clearCart() {
+    cart = [];
+    discountPercent = 0;
+    discountCode = '';
+    document.getElementById('discountCode').value = '';
+    document.getElementById('discountInfo').textContent = '';
+    saveCart();
+    renderAll();
+  }
+
+  // ==================== RENDER ====================
+  function renderMenu() {
+    const grid = document.getElementById('menuGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    MENU.forEach(item => {
+      const inCart = cart.find(i => i.id === item.id);
+      const qty = inCart ? inCart.quantity : 0;
+      const card = document.createElement('div');
+      card.className = 'menu-card';
+      card.innerHTML = `
+        <div class="menu-img">${item.emoji}</div>
+        <div class="menu-info">
+          <div class="menu-name">${item.name}</div>
+          <div class="menu-price">$${item.price.toFixed(2)}</div>
+        </div>
+        ${qty > 0 ? `<div class="qty-badge">${qty}</div>` : ''}
+      `;
+      card.addEventListener('click', () => addToCart(item));
+      grid.appendChild(card);
+    });
+  }
+
+  function renderCart() {
+    const container = document.getElementById('cartItems');
+    if (!container) return;
+
+    if (cart.length === 0) {
+      container.innerHTML = `<div class="cart-empty">${getTranslation('cartEmpty')}</div>`;
+      updateTotals();
+      return;
+    }
+
+    let html = '';
+    cart.forEach(item => {
+      html += `
+        <div class="cart-item">
+          <span class="cart-item-name">${item.name}</span>
+          <div class="cart-item-qty">
+            <button onclick="updateQty('${item.id}', -1)">−</button>
+            <span>${item.quantity}</span>
+            <button onclick="updateQty('${item.id}', 1)">+</button>
+          </div>
+          <span class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+          <button class="cart-item-remove" onclick="removeItem('${item.id}')">✕</button>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+    updateTotals();
+  }
+
+  function updateTotals() {
+    const subtotal = getSubtotal();
+    const tax = getTax();
+    const discountAmt = getDiscountAmount();
+    const total = getTotal();
+
+    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('taxAmount').textContent = `$${tax.toFixed(2)}`;
+
+    if (discountPercent > 0) {
+      document.getElementById('discountRow').style.display = 'flex';
+      document.getElementById('discountAmount').textContent = `-$${discountAmt.toFixed(2)}`;
+    } else {
+      document.getElementById('discountRow').style.display = 'none';
+    }
+
+    document.getElementById('grandTotal').textContent = `$${total.toFixed(2)}`;
+
+    const btn = document.getElementById('placeOrderBtn');
+    if (cart.length === 0) {
+      btn.disabled = true;
+      btn.textContent = getTranslation('addItems');
+    } else {
+      btn.disabled = false;
+      btn.textContent = `${getTranslation('orderBtnReady')}${total.toFixed(2)}`;
+    }
+  }
+
+  function renderStats() {
+    const orders = JSON.parse(localStorage.getItem('hotel_orders') || '[]');
+    const today = new Date().toISOString().split('T')[0];
+    const todayOrders = orders.filter(o => o.createdAt && o.createdAt.startsWith(today));
+    const todayRevenue = todayOrders.filter(o => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.total, 0);
+    const active = orders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length;
+
+    document.getElementById('todayOrders').textContent = todayOrders.length;
+    document.getElementById('todayRevenue').textContent = `$${todayRevenue.toFixed(2)}`;
+    document.getElementById('activeOrders').textContent = active;
+  }
+
+  function renderAll() {
+    renderMenu();
+    renderCart();
+    renderStats();
+  }
+
+  // ==================== PLACE ORDER ====================
+  function placeOrder() {
+    if (cart.length === 0) return;
+
+    const subtotal = getSubtotal();
+    const tax = getTax();
+    const discountAmt = getDiscountAmount();
+    const total = getTotal();
+    const paymentMethod = document.getElementById('paymentMethod').value;
+
+    const order = {
+      id: Date.now().toString(),
+      items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity })),
+      subtotal: subtotal,
+      tax: tax,
+      discountPercent: discountPercent,
+      discountCode: discountCode,
+      discountAmount: discountAmt,
+      total: total,
+      paymentMethod: paymentMethod,
+      paymentStatus: 'paid', // Mark as paid immediately
+      status: 'Completed', // Completed immediately for cashier
+      createdAt: new Date().toISOString(),
+      completedAt: new Date().toISOString()
+    };
+
+    const orders = JSON.parse(localStorage.getItem('hotel_orders') || '[]');
+    orders.unshift(order);
+    localStorage.setItem('hotel_orders', JSON.stringify(orders));
+
+    // Show receipt
+    const receipt = `
+${getTranslation('receipt')}
+────────────────
+${order.items.map(i => `${i.name} x${i.quantity}  $${(i.price*i.quantity).toFixed(2)}`).join('\n')}
+────────────────
+${getTranslation('subtotalLabel')}:   $${subtotal.toFixed(2)}
+${getTranslation('taxLabel')}:   $${tax.toFixed(2)}
+${discountPercent > 0 ? `${getTranslation('discountLabel')}:   -$${discountAmt.toFixed(2)}\n` : ''}
+${getTranslation('totalLabel')}:      $${total.toFixed(2)}
+${getTranslation('paymentCash')}:    ${paymentMethod}
+────────────────
+${getTranslation('receiptThankYou')}
+    `;
+    alert(receipt);
+
+    clearCart();
+    renderAll();
+  }
+
+  // ==================== DISCOUNT ====================
+  function applyDiscount() {
+    const code = document.getElementById('discountCode').value.trim().toLowerCase();
+    const info = document.getElementById('discountInfo');
+
+    if (DISCOUNTS[code]) {
+      discountPercent = DISCOUNTS[code];
+      discountCode = code;
+      const msg = getTranslation('discountApplied').replace('{code}', code.toUpperCase()).replace('{percent}', discountPercent);
+      info.textContent = msg;
+      info.style.color = '#2a6b2a';
+    } else {
+      discountPercent = 0;
+      discountCode = '';
+      info.textContent = getTranslation('invalidCode');
+      info.style.color = '#c0392b';
+    }
+    renderCart();
+  }
+
+  // ==================== EVENT LISTENERS ====================
+  document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
+  document.getElementById('applyDiscountBtn').addEventListener('click', applyDiscount);
+  document.getElementById('discountCode').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') applyDiscount();
+  });
+
+  // ==================== STORAGE SYNC ====================
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'hotel_orders' || e.key === 'cashier_cart') {
+      renderAll();
+    }
+  });
+
+  // ==================== INIT ====================
+  if (checkPassword()) {
+    const savedLang = localStorage.getItem('cashier_lang') || 'en';
+    updateUILanguage(savedLang);
+    loadCart();
+    renderAll();
+    // Auto-refresh stats every 5s
+    setInterval(renderStats, 5000);
+  }
+</script>
+</body>
+</html>

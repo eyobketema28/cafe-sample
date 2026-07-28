@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Monochrome | Manager</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f5f5f5;
+      color: #1a1a1a;
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+
+    .header {
+      background: #ffffff;
+      border-bottom: 2px solid #c9a96e;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    }
+    .logo h2 {
+      font-weight: 300;
+      letter-spacing: 3px;
+      font-family: 'Georgia', serif;
+    }
+    .logo h2 span { color: #c9a96e; }
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .back-btn {
+      background: transparent;
+      border: 1px solid #d4d4d4;
+      padding: 0.4rem 1.2rem;
+      text-decoration: none;
+      color: #1a1a1a;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+    }
+    .back-btn:hover {
+      background: #1a1a1a;
+      color: white;
+      border-color: #1a1a1a;
+    }
+    .logout-btn {
+      background: #c9a96e;
+      border: none;
+      color: white;
+      padding: 0.4rem 1.2rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+    }
+    .logout-btn:hover {
+      background: #1a1a1a;
+    }
+    .lang-selector {
+      display: flex;
+      gap: 0.2rem;
+      background: #f8f6f1;
+      padding: 0.2rem;
+      border: 1px solid #e0d6c8;
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 500;
+      color: #888;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+    }
+    .lang-btn.active {
+      background: #c9a96e;
+      color: white;
+    }
+    .lang-btn:hover:not(.active) { color: #1a1a1a; }
+
+    .password-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .password-overlay.hidden { display: none; }
+    .password-box {
+      background: white;
+      padding: 3rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      border: 2px solid #c9a96e;
+    }
+    .password-box h2 {
+      font-weight: 300;
+      letter-spacing: 3px;
+      margin-bottom: 0.5rem;
+      font-family: 'Georgia', serif;
+    }
+    .password-box p {
+      color: #888;
+      font-size: 0.8rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Georgia', serif;
+    }
+    .password-box input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #d4d4d4;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      font-family: 'Georgia', serif;
+      text-align: center;
+      letter-spacing: 4px;
+    }
+    .password-box button {
+      width: 100%;
+      padding: 0.8rem;
+      background: #1a1a1a;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+    }
+    .password-box button:hover {
+      background: #c9a96e;
+    }
+    .password-box .error {
+      color: #c0392b;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .password-box .error.show { display: block; }
+
+    .container {
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 0 2rem;
+    }
+
+    .today-hero {
+      background: #ffffff;
+      border: 2px solid #c9a96e;
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 30px rgba(201,169,110,0.15);
+    }
+    .today-hero .hero-item .hero-value {
+      font-size: 2.4rem;
+      font-weight: 300;
+      color: #c9a96e;
+      font-family: 'Georgia', serif;
+    }
+    .today-hero .hero-item .hero-label {
+      font-size: 0.7rem;
+      color: #888;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 0.2rem;
+      font-family: 'Georgia', serif;
+    }
+    .today-hero .hero-item .hero-sub {
+      font-size: 0.65rem;
+      color: #aaa;
+      margin-top: 0.1rem;
+    }
+    .today-hero .hero-item.profit .hero-value { color: #2a7a4a; }
+    .today-hero .hero-item.loss .hero-value { color: #a04030; }
+
+    .tabs {
+      display: flex;
+      gap: 0.3rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #e8e0d6;
+      padding-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+      color: #888;
+    }
+    .tab-btn:hover { color: #1a1a1a; }
+    .tab-btn.active {
+      background: #1a1a1a;
+      color: white;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      padding: 1.2rem;
+      text-align: center;
+    }
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 300;
+      color: #c9a96e;
+      font-family: 'Georgia', serif;
+    }
+    .stat-card .label {
+      font-size: 0.65rem;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 0.3rem;
+      font-family: 'Georgia', serif;
+    }
+    .stat-card.gold .value { color: #c9a96e; }
+    .stat-card.green .value { color: #2a7a4a; }
+    .stat-card.red .value { color: #a04030; }
+
+    .date-selector {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .date-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .date-group label {
+      font-size: 0.65rem;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: 'Georgia', serif;
+    }
+    .date-group input, .date-group select {
+      padding: 0.5rem;
+      border: 1px solid #d4d4d4;
+      background: white;
+      font-size: 0.8rem;
+      font-family: 'Georgia', serif;
+    }
+    .date-group button {
+      background: #1a1a1a;
+      color: white;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+    }
+    .date-group button:hover {
+      background: #c9a96e;
+    }
+
+    .table-container {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Georgia', serif;
+    }
+    th, td {
+      padding: 0.8rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #f0ebe4;
+      font-size: 0.8rem;
+    }
+    th {
+      background: #faf8f5;
+      font-weight: 500;
+      color: #666;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+    }
+    tr:hover { background: #faf8f5; }
+    .total-row {
+      background: #f5f0ea !important;
+      font-weight: 600;
+    }
+    .total-row td { border-top: 2px solid #c9a96e; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.1rem 0.6rem;
+      font-size: 0.6rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .status-badge.paid { background: #e0f0e0; color: #2a6b2a; }
+    .status-badge.pending { background: #f5e6d3; color: #a86f1a; }
+    .status-badge.completed { background: #e8e8e8; color: #666; }
+
+    .chart-container {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .chart-container canvas {
+      max-height: 300px;
+      width: 100% !important;
+    }
+
+    .expense-form {
+      background: #ffffff;
+      border: 1px solid #e8e0d6;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .expense-form .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex: 1;
+      min-width: 150px;
+    }
+    .expense-form .field label {
+      font-size: 0.65rem;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: 'Georgia', serif;
+    }
+    .expense-form .field input, 
+    .expense-form .field select,
+    .expense-form .field textarea {
+      padding: 0.5rem;
+      border: 1px solid #d4d4d4;
+      font-family: 'Georgia', serif;
+      font-size: 0.8rem;
+      background: white;
+    }
+    .expense-form .field textarea { resize: vertical; min-height: 40px; }
+    .expense-form button {
+      background: #c9a96e;
+      color: white;
+      border: none;
+      padding: 0.5rem 2rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+      height: 40px;
+      align-self: flex-end;
+    }
+    .expense-form button:hover { background: #1a1a1a; }
+
+    @media (max-width: 768px) {
+      .container { padding: 0 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .date-selector { flex-direction: column; align-items: stretch; }
+      .expense-form { flex-direction: column; }
+      .expense-form .field { min-width: 100%; }
+      .today-hero { grid-template-columns: 1fr 1fr; padding: 1rem; }
+      .today-hero .hero-item .hero-value { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="password-overlay" id="passwordOverlay">
+  <div class="password-box">
+    <h2 id="loginTitle">🔐 THE MONOCHROME</h2>
+    <p id="loginSub">manager access</p>
+    <input type="password" id="passwordInput" placeholder="••••••" maxlength="20">
+    <button id="unlockBtn" data-key="unlockBtn">unlock</button>
+    <div class="error" id="passwordError">incorrect password</div>
+  </div>
+</div>
+
+<div class="header" id="mainHeader" style="display:none;">
+  <div class="logo"><h2>THE <span>MONOCHROME</span> · <span style="font-size:0.7rem;letter-spacing:2px;color:#888;" data-key="managerLabel">manager</span></h2></div>
+  <div class="header-actions">
+    <div class="lang-selector">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="am">አማ</button>
+      <button class="lang-btn" data-lang="ar">ع</button>
+    </div>
+    <a href="index.html" class="back-btn" data-key="backBtn">← menu</a>
+    <button class="logout-btn" id="logoutBtn" data-key="lockBtn">lock</button>
+  </div>
+</div>
+
+<div class="container" id="mainContent" style="display:none;">
+
+  <div class="today-hero" id="todayHero">
+    <div class="hero-item"><div class="hero-value" id="todayRevenueHero">$0.00</div><div class="hero-label" data-key="todayRevenue">today's revenue</div><div class="hero-sub" id="todayOrdersHero">0 orders</div></div>
+    <div class="hero-item"><div class="hero-value" id="todayExpensesHero">$0.00</div><div class="hero-label" data-key="todayExpenses">today's expenses</div></div>
+    <div class="hero-item profit" id="todayProfitContainer"><div class="hero-value" id="todayProfitHero">$0.00</div><div class="hero-label" data-key="todayProfit">today's profit</div></div>
+    <div class="hero-item"><div class="hero-value" id="todayAvgHero">$0.00</div><div class="hero-label" data-key="todayAvg">average order</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview" data-key="tabOverview">📊 overview</button>
+    <button class="tab-btn" data-tab="orders" data-key="tabOrders">📋 orders</button>
+    <button class="tab-btn" data-tab="expenses" data-key="tabExpenses">💰 expenses</button>
+    <button class="tab-btn" data-tab="reports" data-key="tabReports">📈 reports</button>
+  </div>
+
+  <div id="overviewTab" class="tab-content active">
+    <div class="stats-grid" id="overviewStats"></div>
+    <div class="chart-container">
+      <canvas id="revenueChart"></canvas>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1rem;">
+      <div class="chart-container"><canvas id="paymentChart"></canvas></div>
+      <div class="chart-container"><canvas id="popularChart"></canvas></div>
+    </div>
+    <div style="margin-top:1rem; background:#fff; border:1px solid #e8e0d6; padding:1.2rem;">
+      <h4 style="font-weight:300; letter-spacing:2px; margin-bottom:0.8rem; font-family:'Georgia',serif;" data-key="recentActivity">📌 recent activity</h4>
+      <div id="recentActivity" style="max-height:200px; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <div id="ordersTab" class="tab-content">
+    <div class="date-selector">
+      <div class="date-group"><label data-key="fromLabel">from</label><input type="date" id="orderFrom"></div>
+      <div class="date-group"><label data-key="toLabel">to</label><input type="date" id="orderTo"></div>
+      <div class="date-group"><label data-key="statusLabel">status</label>
+        <select id="orderStatusFilter">
+          <option value="all" data-key="allStatus">all</option>
+          <option value="Received" data-key="statusReceived">received</option>
+          <option value="Preparing" data-key="statusPreparing">preparing</option>
+          <option value="Delivered" data-key="statusDelivered">delivered</option>
+          <option value="Completed" data-key="statusCompleted">completed</option>
+          <option value="Cancelled" data-key="statusCancelled">cancelled</option>
+        </select>
+      </div>
+      <div class="date-group"><button id="filterOrdersBtn" data-key="applyBtn">apply</button></div>
+      <div class="date-group"><button id="resetOrdersBtn" data-key="resetBtn">reset</button></div>
+    </div>
+    <div class="table-container" id="ordersTableContainer"></div>
+  </div>
+
+  <div id="expensesTab" class="tab-content">
+    <div class="stats-grid" id="expenseStats"></div>
+    
+    <div class="expense-form" id="expenseForm">
+      <div class="field"><label data-key="expenseDesc">description</label><input type="text" id="expenseDesc" placeholder="e.g. staff wages" data-key="expenseDescPlaceholder"></div>
+      <div class="field"><label data-key="expenseAmount">amount ($)</label><input type="number" id="expenseAmount" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label data-key="expenseCategory">category</label>
+        <select id="expenseCategory">
+          <option value="wages" data-key="catWages">wages</option>
+          <option value="supplies" data-key="catSupplies">supplies</option>
+          <option value="utilities" data-key="catUtilities">utilities</option>
+          <option value="maintenance" data-key="catMaintenance">maintenance</option>
+          <option value="marketing" data-key="catMarketing">marketing</option>
+          <option value="other" data-key="catOther">other</option>
+        </select>
+      </div>
+      <div class="field"><label data-key="expenseDate">date</label><input type="date" id="expenseDate"></div>
+      <button id="addExpenseBtn" data-key="addExpenseBtn">+ add expense</button>
+    </div>
+
+    <div class="table-container" id="expensesTableContainer"></div>
+  </div>
+
+  <div id="reportsTab" class="tab-content">
+    <div class="date-selector">
+      <div class="date-group"><label data-key="periodLabel">period</label>
+        <select id="reportPeriod">
+          <option value="today" data-key="periodToday">today</option>
+          <option value="week" selected data-key="periodWeek">this week</option>
+          <option value="month" data-key="periodMonth">this month</option>
+          <option value="year" data-key="periodYear">this year</option>
+          <option value="custom" data-key="periodCustom">custom</option>
+        </select>
+      </div>
+      <div class="date-group"><label data-key="fromLabel">from</label><input type="date" id="reportFrom"></div>
+      <div class="date-group"><label data-key="toLabel">to</label><input type="date" id="reportTo"></div>
+      <div class="date-group"><button id="generateReportBtn" data-key="generateBtn">generate report</button></div>
+    </div>
+    <div id="reportContent"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const translations = {
+    en: {
+      loginTitle: '🔐 THE MONOCHROME',
+      loginSub: 'manager access',
+      unlockBtn: 'unlock',
+      managerLabel: 'manager',
+      backBtn: '← menu',
+      lockBtn: 'lock',
+      todayRevenue: "today's revenue",
+      todayExpenses: "today's expenses",
+      todayProfit: "today's profit",
+      todayAvg: "average order",
+      tabOverview: '📊 overview',
+      tabOrders: '📋 orders',
+      tabExpenses: '💰 expenses',
+      tabReports: '📈 reports',
+      fromLabel: 'from',
+      toLabel: 'to',
+      statusLabel: 'status',
+      allStatus: 'all',
+      statusReceived: 'received',
+      statusPreparing: 'preparing',
+      statusDelivered: 'delivered',
+      statusCompleted: 'completed',
+      statusCancelled: 'cancelled',
+      applyBtn: 'apply',
+      resetBtn: 'reset',
+      expenseDesc: 'description',
+      expenseDescPlaceholder: 'e.g. staff wages',
+      expenseAmount: 'amount ($)',
+      expenseCategory: 'category',
+      catWages: 'wages',
+      catSupplies: 'supplies',
+      catUtilities: 'utilities',
+      catMaintenance: 'maintenance',
+      catMarketing: 'marketing',
+      catOther: 'other',
+      expenseDate: 'date',
+      addExpenseBtn: '+ add expense',
+      periodLabel: 'period',
+      periodToday: 'today',
+      periodWeek: 'this week',
+      periodMonth: 'this month',
+      periodYear: 'this year',
+      periodCustom: 'custom',
+      generateBtn: 'generate report',
+      recentActivity: '📌 recent activity',
+      noOrders: '— no orders found —',
+      noExpenses: '— no expenses logged —',
+      noActivity: '— no activity —',
+      totalLabel: 'TOTAL',
+      revenue: 'Revenue',
+      expenses: 'Expenses',
+      profit: 'Net Profit',
+      profitMargin: 'Profit Margin',
+      totalOrders: 'Total Orders',
+      totalItems: 'Total Items Sold',
+      avgOrder: 'Average Order Value'
+    },
+    am: {
+      loginTitle: '🔐 ዘ ሞኖክሮም',
+      loginSub: 'የሥራ አስኪያጅ መግቢያ',
+      unlockBtn: 'ክፈት',
+      managerLabel: 'ሥራ አስኪያጅ',
+      backBtn: '← ምናሌ',
+      lockBtn: 'ቆልፍ',
+      todayRevenue: 'የዛሬ ገቢ',
+      todayExpenses: 'የዛሬ ወጪ',
+      todayProfit: 'የዛሬ ትርፍ',
+      todayAvg: 'አማካይ ትዕዛዝ',
+      tabOverview: '📊 አጠቃላይ',
+      tabOrders: '📋 ትዕዛዞች',
+      tabExpenses: '💰 ወጪዎች',
+      tabReports: '📈 ሪፖርቶች',
+      fromLabel: 'ከ',
+      toLabel: 'ወደ',
+      statusLabel: 'ሁኔታ',
+      allStatus: 'ሁሉም',
+      statusReceived: 'ተቀብሏል',
+      statusPreparing: 'በዝግጅት ላይ',
+      statusDelivered: 'ተሰራጭቷል',
+      statusCompleted: 'ተጠናቋል',
+      statusCancelled: 'ተሰርዟል',
+      applyBtn: 'ተግብር',
+      resetBtn: 'ዳግም',
+      expenseDesc: 'መግለጫ',
+      expenseDescPlaceholder: 'ለምሳሌ የሰራተኛ ደሞዝ',
+      expenseAmount: 'መጠን ($)',
+      expenseCategory: 'ምድብ',
+      catWages: 'ደሞዝ',
+      catSupplies: 'አቅርቦቶች',
+      catUtilities: 'መገልገያዎች',
+      catMaintenance: 'ጥገና',
+      catMarketing: 'ግብይት',
+      catOther: 'ሌላ',
+      expenseDate: 'ቀን',
+      addExpenseBtn: '+ ወጪ ጨምር',
+      periodLabel: 'ጊዜ',
+      periodToday: 'ዛሬ',
+      periodWeek: 'ይህ ሳምንት',
+      periodMonth: 'ይህ ወር',
+      periodYear: 'ይህ ዓመት',
+      periodCustom: 'ብጁ',
+      generateBtn: 'ሪፖርት አዘጋጅ',
+      recentActivity: '📌 የቅርብ ጊዜ እንቅስቃሴ',
+      noOrders: '— ምንም ትዕዛዞች አልተገኙም —',
+      noExpenses: '— ምንም ወጪዎች አልተመዘገቡም —',
+      noActivity: '— ምንም እንቅስቃሴ የለም —',
+      totalLabel: 'ድምር',
+      revenue: 'ገቢ',
+      expenses: 'ወጪዎች',
+      profit: 'የተጣራ ትርፍ',
+      profitMargin: 'የትርፍ ህዳግ',
+      totalOrders: 'ጠቅላላ ትዕዛዞች',
+      totalItems: 'የተሸጡ እቃዎች',
+      avgOrder: 'አማካይ የትዕዛዝ ዋጋ'
+    },
+    ar: {
+      loginTitle: '🔐 ذا مونوكروم',
+      loginSub: 'دخول المدير',
+      unlockBtn: 'فتح',
+      managerLabel: 'مدير',
+      backBtn: '← القائمة',
+      lockBtn: 'قفل',
+      todayRevenue: 'إيرادات اليوم',
+      todayExpenses: 'مصروفات اليوم',
+      todayProfit: 'ربح اليوم',
+      todayAvg: 'متوسط الطلب',
+      tabOverview: '📊 نظرة عامة',
+      tabOrders: '📋 الطلبات',
+      tabExpenses: '💰 المصروفات',
+      tabReports: '📈 التقارير',
+      fromLabel: 'من',
+      toLabel: 'إلى',
+      statusLabel: 'الحالة',
+      allStatus: 'الكل',
+      statusReceived: 'مستلم',
+      statusPreparing: 'قيد التحضير',
+      statusDelivered: 'تم التوصيل',
+      statusCompleted: 'مكتمل',
+      statusCancelled: 'ملغي',
+      applyBtn: 'تطبيق',
+      resetBtn: 'إعادة تعيين',
+      expenseDesc: 'الوصف',
+      expenseDescPlaceholder: 'مثال: رواتب الموظفين',
+      expenseAmount: 'المبلغ ($)',
+      expenseCategory: 'الفئة',
+      catWages: 'رواتب',
+      catSupplies: 'مستلزمات',
+      catUtilities: 'مرافق',
+      catMaintenance: 'صيانة',
+      catMarketing: 'تسويق',
+      catOther: 'أخرى',
+      expenseDate: 'التاريخ',
+      addExpenseBtn: '+ إضافة مصروف',
+      periodLabel: 'الفترة',
+      periodToday: 'اليوم',
+      periodWeek: 'هذا الأسبوع',
+      periodMonth: 'هذا الشهر',
+      periodYear: 'هذه السنة',
+      periodCustom: 'مخصص',
+      generateBtn: 'إنشاء تقرير',
+      recentActivity: '📌 النشاط الأخير',
+      noOrders: '— لا توجد طلبات —',
+      noExpenses: '— لا توجد مصروفات —',
+      noActivity: '— لا يوجد نشاط —',
+      totalLabel: 'الإجمالي',
+      revenue: 'الإيرادات',
+      expenses: 'المصروفات',
+      profit: 'صافي الربح',
+      profitMargin: 'هامش الربح',
+      totalOrders: 'إجمالي الطلبات',
+      totalItems: 'إجمالي العناصر المباعة',
+      avgOrder: 'متوسط قيمة الطلب'
+    }
+  };
+
+  const MANAGER_PASSWORD = "manager2024";
+  let currentLang = 'en';
+
+  function getTranslation(key) {
+    return translations[currentLang]?.[key] || key;
+  }
+
+  function updateUILanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      const text = getTranslation(key);
+      if (text) el.textContent = text;
+    });
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      if (el.tagName === 'INPUT' && el.placeholder) {
+        el.placeholder = getTranslation(key) || el.placeholder;
+      }
+    });
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    localStorage.setItem('manager_lang', lang);
+    renderTodayHero();
+    renderOverview();
+    renderOrders('', '', 'all');
+    renderExpenses();
+    const period = document.getElementById('reportPeriod').value;
+    if (period === 'custom') {
+      renderReport('custom', document.getElementById('reportFrom').value, document.getElementById('reportTo').value);
+    } else {
+      renderReport(period);
+    }
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      updateUILanguage(btn.dataset.lang);
+    });
+  });
+
+  function checkPassword() {
+    const overlay = document.getElementById('passwordOverlay');
+    const mainHeader = document.getElementById('mainHeader');
+    const mainContent = document.getElementById('mainContent');
+    const saved = sessionStorage.getItem('manager_auth');
+
+    if (saved === 'authenticated') {
+      overlay.classList.add('hidden');
+      mainHeader.style.display = 'flex';
+      mainContent.style.display = 'block';
+      return true;
+    }
+    return false;
+  }
+
+  document.getElementById('unlockBtn').addEventListener('click', () => {
+    const input = document.getElementById('passwordInput');
+    const error = document.getElementById('passwordError');
+    if (input.value === MANAGER_PASSWORD) {
+      sessionStorage.setItem('manager_auth', 'authenticated');
+      error.classList.remove('show');
+      checkPassword();
+      const savedLang = localStorage.getItem('manager_lang') || 'en';
+      updateUILanguage(savedLang);
+      initManager();
+    } else {
+      error.classList.add('show');
+      error.textContent = getTranslation('errorPassword') || 'incorrect password';
+      input.value = '';
+      input.focus();
+    }
+  });
+
+  document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('unlockBtn').click();
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('manager_auth');
+    location.reload();
+  });
+
+  function loadOrders() {
+    return JSON.parse(localStorage.getItem('hotel_orders') || '[]');
+  }
+
+  function loadExpenses() {
+    return JSON.parse(localStorage.getItem('hotel_expenses') || '[]');
+  }
+
+  function saveExpenses(e) {
+    localStorage.setItem('hotel_expenses', JSON.stringify(e));
+  }
+
+  function getPaidOrders(orders) {
+    return orders.filter(o => o.paymentStatus === 'paid');
+  }
+
+  function getDateStr(date) {
+    return new Date(date).toISOString().split('T')[0];
+  }
+
+  function isToday(dateStr) {
+    return dateStr === new Date().toISOString().split('T')[0];
+  }
+
+  function isThisWeek(dateStr) {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0,0,0,0);
+    return d >= weekStart;
+  }
+
+  function isThisMonth(dateStr) {
+    const d = new Date(dateStr);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }
+
+  function isThisYear(dateStr) {
+    return new Date(dateStr).getFullYear() === new Date().getFullYear();
+  }
+
+  function filterOrdersByPeriod(orders, period) {
+    return orders.filter(o => {
+      const d = getDateStr(o.createdAt);
+      if (period === 'today') return isToday(d);
+      if (period === 'week') return isThisWeek(d);
+      if (period === 'month') return isThisMonth(d);
+      if (period === 'year') return isThisYear(d);
+      return true;
+    });
+  }
+
+  function calculateTotals(orders) {
+    const revenue = orders.reduce((s, o) => s + o.total, 0);
+    const tax = orders.reduce((s, o) => s + (o.tax || 0), 0);
+    const count = orders.length;
+    const items = orders.reduce((s, o) => s + o.items.reduce((a, i) => a + i.quantity, 0), 0);
+    const avg = count > 0 ? revenue / count : 0;
+    return { revenue, tax, count, items, avg };
+  }
+
+  function renderTodayHero() {
+    const orders = loadOrders();
+    const paid = getPaidOrders(orders);
+    const expenses = loadExpenses();
+    const today = getDateStr(new Date());
+
+    const todayOrders = paid.filter(o => getDateStr(o.createdAt) === today);
+    const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
+    const todayExpenses = expenses.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
+    const todayProfit = todayRevenue - todayExpenses;
+    const avgOrder = todayOrders.length > 0 ? todayRevenue / todayOrders.length : 0;
+
+    document.getElementById('todayRevenueHero').textContent = `$${todayRevenue.toFixed(2)}`;
+    document.getElementById('todayOrdersHero').textContent = `${todayOrders.length} orders`;
+    document.getElementById('todayExpensesHero').textContent = `$${todayExpenses.toFixed(2)}`;
+    document.getElementById('todayProfitHero').textContent = `$${todayProfit.toFixed(2)}`;
+    document.getElementById('todayAvgHero').textContent = `$${avgOrder.toFixed(2)}`;
+
+    const profitContainer = document.getElementById('todayProfitContainer');
+    profitContainer.className = `hero-item ${todayProfit >= 0 ? 'profit' : 'loss'}`;
+  }
+
+  let revenueChartInstance = null;
+  let paymentChartInstance = null;
+  let popularChartInstance = null;
+
+  function renderOverview() {
+    const orders = loadOrders();
+    const paid = getPaidOrders(orders);
+    const expenses = loadExpenses();
+
+    const totalRevenue = paid.reduce((s, o) => s + o.total, 0);
+    const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+    const profit = totalRevenue - totalExpenses;
+
+    document.getElementById('overviewStats').innerHTML = `
+      <div class="stat-card gold"><div class="value">$${totalRevenue.toFixed(2)}</div><div class="label">${getTranslation('revenue')}</div></div>
+      <div class="stat-card red"><div class="value">$${totalExpenses.toFixed(2)}</div><div class="label">${getTranslation('expenses')}</div></div>
+      <div class="stat-card green"><div class="value">$${profit.toFixed(2)}</div><div class="label">${getTranslation('profit')}</div></div>
+      <div class="stat-card"><div class="value">${paid.length}</div><div class="label">${getTranslation('totalOrders')}</div></div>
+    `;
+
+    const days = [];
+    const revenues = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const ds = getDateStr(d);
+      days.push(ds.slice(5));
+      const dailyOrders = paid.filter(o => getDateStr(o.createdAt) === ds);
+      revenues.push(dailyOrders.reduce((s, o) => s + o.total, 0));
+    }
+
+    const ctx1 = document.getElementById('revenueChart').getContext('2d');
+    if (revenueChartInstance) revenueChartInstance.destroy();
+    revenueChartInstance = new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: days,
+        datasets: [{
+          label: 'Daily Revenue ($)',
+          data: revenues,
+          backgroundColor: 'rgba(201,169,110,0.7)',
+          borderColor: '#c9a96e',
+          borderWidth: 2,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    const methods = {};
+    paid.forEach(o => {
+      const m = o.paymentMethod || 'cash';
+      methods[m] = (methods[m] || 0) + o.total;
+    });
+    const ctx2 = document.getElementById('paymentChart').getContext('2d');
+    if (paymentChartInstance) paymentChartInstance.destroy();
+    paymentChartInstance = new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(methods),
+        datasets: [{
+          data: Object.values(methods),
+          backgroundColor: ['#c9a96e', '#1a1a1a', '#8a7a5a']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    const counts = {};
+    orders.forEach(o => {
+      o.items.forEach(i => {
+        counts[i.name] = (counts[i.name] || 0) + i.quantity;
+      });
+    });
+    const top = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0,5);
+    const ctx3 = document.getElementById('popularChart').getContext('2d');
+    if (popularChartInstance) popularChartInstance.destroy();
+    popularChartInstance = new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: top.map(t => t[0]),
+        datasets: [{
+          label: 'Times Ordered',
+          data: top.map(t => t[1]),
+          backgroundColor: '#1a1a1a',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        indexAxis: 'y'
+      }
+    });
+
+    const recent = orders.slice(0, 10);
+    const activityHtml = recent.length ? recent.map(o => `
+      <div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid #f0ebe4; font-size:0.8rem;">
+        <span>${o.location || 'Order'} · ${o.items.map(i => i.name).join(', ').slice(0,30)}${o.items.length > 2 ? '...' : ''}</span>
+        <span style="color:#c9a96e;">$${o.total.toFixed(2)}</span>
+        <span style="font-size:0.65rem; color:#888;">${new Date(o.createdAt).toLocaleString()}</span>
+      </div>
+    `).join('') : `<div style="color:#aaa; padding:1rem; text-align:center;">${getTranslation('noActivity')}</div>`;
+    document.getElementById('recentActivity').innerHTML = activityHtml;
+  }
+
+  function renderOrders(from, to, statusFilter) {
+    let orders = loadOrders();
+    if (from && to) {
+      orders = orders.filter(o => {
+        const d = getDateStr(o.createdAt);
+        return d >= from && d <= to;
+      });
+    }
+    if (statusFilter && statusFilter !== 'all') {
+      orders = orders.filter(o => o.status === statusFilter);
+    }
+
+    const container = document.getElementById('ordersTableContainer');
+    if (orders.length === 0) {
+      container.innerHTML = `<div style="padding:2rem; text-align:center; color:#aaa;">${getTranslation('noOrders')}</div>`;
+      return;
+    }
+
+    let html = `<table>
+      <thead><tr>
+        <th>#</th>
+        <th>${getTranslation('fromLabel')}</th>
+        <th>location</th>
+        <th>items</th>
+        <th>total</th>
+        <th>payment</th>
+        <th>status</th>
+      </tr></thead><tbody>`;
+    orders.forEach((o, i) => {
+      html += `<tr>
+        <td>${i + 1}</td>
+        <td>${new Date(o.createdAt).toLocaleString()}</td>
+        <td>${o.location || '—'}</td>
+        <td>${o.items.map(item => `${item.name} x${item.quantity}`).join(', ')}</td>
+        <td>$${o.total.toFixed(2)}</td>
+        <td><span class="status-badge ${o.paymentStatus === 'paid' ? 'paid' : 'pending'}">${o.paymentStatus || 'pending'}</span></td>
+        <td><span class="status-badge ${o.status === 'Completed' ? 'completed' : ''}">${o.status || 'Received'}</span></td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+  }
+
+  function renderExpenses() {
+    const expenses = loadExpenses();
+    const total = expenses.reduce((s, e) => s + e.amount, 0);
+    const thisMonth = expenses.filter(e => isThisMonth(e.date));
+    const monthTotal = thisMonth.reduce((s, e) => s + e.amount, 0);
+
+    document.getElementById('expenseStats').innerHTML = `
+      <div class="stat-card red"><div class="value">$${total.toFixed(2)}</div><div class="label">${getTranslation('totalLabel')} ${getTranslation('expenses')}</div></div>
+      <div class="stat-card red"><div class="value">$${monthTotal.toFixed(2)}</div><div class="label">${getTranslation('periodMonth')}</div></div>
+      <div class="stat-card"><div class="value">${expenses.length}</div><div class="label">${getTranslation('totalLabel')} entries</div></div>
+    `;
+
+    const container = document.getElementById('expensesTableContainer');
+    if (expenses.length === 0) {
+      container.innerHTML = `<div style="padding:2rem; text-align:center; color:#aaa;">${getTranslation('noExpenses')}</div>`;
+      return;
+    }
+
+    let html = `<table>
+      <thead><tr><th>${getTranslation('expenseDate')}</th><th>${getTranslation('expenseDesc')}</th><th>${getTranslation('expenseCategory')}</th><th>${getTranslation('expenseAmount')}</th><th></th></tr></thead><tbody>`;
+    expenses.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((e, i) => {
+      html += `<tr>
+        <td>${e.date}</td>
+        <td>${e.description}</td>
+        <td>${getTranslation('cat' + e.category.charAt(0).toUpperCase() + e.category.slice(1)) || e.category}</td>
+        <td>$${e.amount.toFixed(2)}</td>
+        <td><button onclick="deleteExpense(${i})" style="background:none; border:none; color:#c0392b; cursor:pointer;">✕</button></td>
+      </tr>`;
+    });
+    const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
+    html += `<tr class="total-row"><td colspan="3"><strong>${getTranslation('totalLabel')}</strong></td><td><strong>$${totalExp.toFixed(2)}</strong></td><td></td></tr>`;
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+  }
+
+  function deleteExpense(index) {
+    const expenses = loadExpenses();
+    expenses.splice(index, 1);
+    saveExpenses(expenses);
+    renderExpenses();
+    renderTodayHero();
+  }
+
+  function addExpense() {
+    const desc = document.getElementById('expenseDesc').value.trim();
+    const amount = parseFloat(document.getElementById('expenseAmount').value);
+    const category = document.getElementById('expenseCategory').value;
+    const date = document.getElementById('expenseDate').value;
+
+    if (!desc || !amount || amount <= 0 || !date) {
+      alert('Please fill in all fields with valid values');
+      return;
+    }
+
+    const expenses = loadExpenses();
+    expenses.push({ description: desc, amount, category, date });
+    saveExpenses(expenses);
+
+    document.getElementById('expenseDesc').value = '';
+    document.getElementById('expenseAmount').value = '';
+    renderExpenses();
+    renderTodayHero();
+  }
+
+  function renderReport(period, from, to) {
+    const orders = loadOrders();
+    const paid = getPaidOrders(orders);
+    const expenses = loadExpenses();
+
+    let filteredOrders = [];
+    let filteredExpenses = [];
+
+    if (period === 'custom' && from && to) {
+      filteredOrders = paid.filter(o => {
+        const d = getDateStr(o.createdAt);
+        return d >= from && d <= to;
+      });
+      filteredExpenses = expenses.filter(e => e.date >= from && e.date <= to);
+    } else {
+      filteredOrders = filterOrdersByPeriod(paid, period);
+      filteredExpenses = expenses.filter(e => {
+        if (period === 'today') return isToday(e.date);
+        if (period === 'week') return isThisWeek(e.date);
+        if (period === 'month') return isThisMonth(e.date);
+        if (period === 'year') return isThisYear(e.date);
+        return true;
+      });
+    }
+
+    const totals = calculateTotals(filteredOrders);
+    const totalExpenses = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+    const profit = totals.revenue - totalExpenses;
+    const profitMargin = totals.revenue > 0 ? (profit / totals.revenue * 100) : 0;
+
+    const daily = {};
+    filteredOrders.forEach(o => {
+      const d = getDateStr(o.createdAt);
+      if (!daily[d]) daily[d] = { revenue: 0, count: 0 };
+      daily[d].revenue += o.total;
+      daily[d].count += 1;
+    });
+
+    const sortedDays = Object.keys(daily).sort();
+    let dailyTable = '';
+    if (sortedDays.length > 0) {
+      dailyTable = `<div class="table-container">
+        <table>
+          <thead><tr><th>${getTranslation('expenseDate')}</th><th>${getTranslation('totalOrders')}</th><th>${getTranslation('revenue')}</th></tr></thead>
+          <tbody>
+            ${sortedDays.map(d => `
+              <tr><td>${d}</td><td>${daily[d].count}</td><td>$${daily[d].revenue.toFixed(2)}</td></tr>
+            `).join('')}
+            <tr class="total-row"><td><strong>${getTranslation('totalLabel')}</strong></td><td><strong>${totals.count}</strong></td><td><strong>$${totals.revenue.toFixed(2)}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    document.getElementById('reportContent').innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card gold"><div class="value">$${totals.revenue.toFixed(2)}</div><div class="label">${getTranslation('revenue')}</div></div>
+        <div class="stat-card red"><div class="value">$${totalExpenses.toFixed(2)}</div><div class="label">${getTranslation('expenses')}</div></div>
+        <div class="stat-card green"><div class="value">$${profit.toFixed(2)}</div><div class="label">${getTranslation('profit')}</div></div>
+        <div class="stat-card"><div class="value">${profitMargin.toFixed(1)}%</div><div class="label">${getTranslation('profitMargin')}</div></div>
+        <div class="stat-card"><div class="value">${totals.count}</div><div class="label">${getTranslation('totalOrders')}</div></div>
+        <div class="stat-card"><div class="value">$${totals.avg.toFixed(2)}</div><div class="label">${getTranslation('avgOrder')}</div></div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead><tr><th>${getTranslation('expenseDesc')}</th><th>value</th></tr></thead>
+          <tbody>
+            <tr><td>${getTranslation('revenue')}</td><td>$${totals.revenue.toFixed(2)}</td></tr>
+            <tr><td>${getTranslation('taxLabel') || 'Tax'}</td><td>$${totals.tax.toFixed(2)}</td></tr>
+            <tr><td>${getTranslation('expenses')}</td><td>$${totalExpenses.toFixed(2)}</td></tr>
+            <tr><td><strong>${getTranslation('profit')}</strong></td><td><strong>$${profit.toFixed(2)}</strong></td></tr>
+            <tr><td>${getTranslation('profitMargin')}</td><td><strong>${profitMargin.toFixed(1)}%</strong></td></tr>
+            <tr><td>${getTranslation('totalOrders')}</td><td>${totals.count}</td></tr>
+            <tr><td>${getTranslation('totalItems')}</td><td>${totals.items}</td></tr>
+            <tr><td>${getTranslation('avgOrder')}</td><td>$${totals.avg.toFixed(2)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      ${dailyTable}
+    `;
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+
+      if (btn.dataset.tab === 'overview') { renderTodayHero(); renderOverview(); }
+      if (btn.dataset.tab === 'orders') renderOrders('', '', 'all');
+      if (btn.dataset.tab === 'expenses') renderExpenses();
+      if (btn.dataset.tab === 'reports') {
+        const period = document.getElementById('reportPeriod').value;
+        if (period === 'custom') {
+          renderReport('custom', document.getElementById('reportFrom').value, document.getElementById('reportTo').value);
+        } else {
+          renderReport(period);
+        }
+      }
+    });
+  });
+
+  document.getElementById('filterOrdersBtn').addEventListener('click', () => {
+    const from = document.getElementById('orderFrom').value;
+    const to = document.getElementById('orderTo').value;
+    const status = document.getElementById('orderStatusFilter').value;
+    renderOrders(from, to, status);
+  });
+
+  document.getElementById('resetOrdersBtn').addEventListener('click', () => {
+    document.getElementById('orderFrom').value = '';
+    document.getElementById('orderTo').value = '';
+    document.getElementById('orderStatusFilter').value = 'all';
+    renderOrders('', '', 'all');
+  });
+
+  document.getElementById('addExpenseBtn').addEventListener('click', addExpense);
+
+  document.getElementById('generateReportBtn').addEventListener('click', () => {
+    const period = document.getElementById('reportPeriod').value;
+    if (period === 'custom') {
+      renderReport('custom', document.getElementById('reportFrom').value, document.getElementById('reportTo').value);
+    } else {
+      renderReport(period);
+    }
+  });
+
+  document.getElementById('reportPeriod').addEventListener('change', (e) => {
+    const show = e.target.value === 'custom';
+    document.querySelectorAll('#reportFrom, #reportTo').forEach(el => {
+      el.style.display = show ? 'block' : 'none';
+      el.disabled = !show;
+    });
+  });
+  document.getElementById('reportPeriod').dispatchEvent(new Event('change'));
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'hotel_orders' || e.key === 'hotel_expenses') {
+      renderTodayHero();
+      renderOverview();
+    }
+  });
+
+  function initManager() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('expenseDate').value = today;
+    document.getElementById('orderFrom').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+    document.getElementById('orderTo').value = today;
+    document.getElementById('reportFrom').value = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+    document.getElementById('reportTo').value = today;
+
+    renderTodayHero();
+    renderOverview();
+    renderOrders('', '', 'all');
+    renderExpenses();
+    renderReport('week');
+
+    setInterval(() => {
+      renderTodayHero();
+      renderOverview();
+    }, 5000);
+  }
+
+  if (checkPassword()) {
+    const savedLang = localStorage.getItem('manager_lang') || 'en';
+    updateUILanguage(savedLang);
+    initManager();
+  }
+</script>
+</body>
+</html>
