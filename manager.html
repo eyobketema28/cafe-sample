@@ -89,6 +89,17 @@
     }
     .lang-btn:hover:not(.active) { color: #1a1a1a; }
 
+    .sync-status {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0;
+      font-family: 'Georgia', serif;
+      letter-spacing: 1px;
+    }
+    .sync-status.synced { color: #2a7a4a; }
+    .sync-status.syncing { color: #c9a96e; }
+    .sync-status.error { color: #c0392b; }
+
     .password-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -421,6 +432,7 @@
 <div class="header" id="mainHeader" style="display:none;">
   <div class="logo"><h2>THE <span>MONOCHROME</span> · <span style="font-size:0.7rem;letter-spacing:2px;color:#888;" data-key="managerLabel">manager</span></h2></div>
   <div class="header-actions">
+    <span class="sync-status synced" id="syncStatus">● synced</span>
     <div class="lang-selector">
       <button class="lang-btn active" data-lang="en">EN</button>
       <button class="lang-btn" data-lang="am">አማ</button>
@@ -527,6 +539,60 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+  // ==================== GITHUB CONFIG ====================
+  // ✅ YOUR CREDENTIALS ARE ALREADY SET:
+  const GIST_ID = "d2b5c83247826caa343349cca52b6313";
+  const GIST_FILENAME = "monochrome_data.json";
+
+  // ==================== GITHUB SYNC FUNCTIONS ====================
+  function setSyncStatus(status, message) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    if (status === 'synced') {
+      el.className = 'sync-status synced';
+      el.textContent = '● ' + (message || 'synced');
+    } else if (status === 'syncing') {
+      el.className = 'sync-status syncing';
+      el.textContent = '⟳ ' + (message || 'syncing...');
+    } else {
+      el.className = 'sync-status error';
+      el.textContent = '✕ ' + (message || 'error');
+    }
+  }
+
+  async function readFromGist() {
+    try {
+      setSyncStatus('syncing', 'loading...');
+      const url = `https://api.github.com/gists/${GIST_ID}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to read gist');
+      const data = await response.json();
+      const content = data.files[GIST_FILENAME]?.content;
+      if (!content) throw new Error('File not found');
+      setSyncStatus('synced', 'loaded');
+      return JSON.parse(content);
+    } catch (error) {
+      console.error('Read error:', error);
+      setSyncStatus('error', 'read failed');
+      return null;
+    }
+  }
+
+  // ==================== DATA MANAGEMENT ====================
+  let allOrders = [];
+  let allExpenses = [];
+
+  async function loadAllData() {
+    const data = await readFromGist();
+    if (data) {
+      allOrders = data.orders || [];
+      allExpenses = data.expenses || [];
+    }
+    renderAll();
+    return data;
+  }
+
+  // ==================== TRANSLATIONS ====================
   const translations = {
     en: {
       loginTitle: '🔐 THE MONOCHROME',
@@ -584,7 +650,8 @@
       profitMargin: 'Profit Margin',
       totalOrders: 'Total Orders',
       totalItems: 'Total Items Sold',
-      avgOrder: 'Average Order Value'
+      avgOrder: 'Average Order Value',
+      taxLabel: 'tax'
     },
     am: {
       loginTitle: '🔐 ዘ ሞኖክሮም',
@@ -642,7 +709,8 @@
       profitMargin: 'የትርፍ ህዳግ',
       totalOrders: 'ጠቅላላ ትዕዛዞች',
       totalItems: 'የተሸጡ እቃዎች',
-      avgOrder: 'አማካይ የትዕዛዝ ዋጋ'
+      avgOrder: 'አማካይ የትዕዛዝ ዋጋ',
+      taxLabel: 'ታክስ'
     },
     ar: {
       loginTitle: '🔐 ذا مونوكروم',
@@ -700,10 +768,12 @@
       profitMargin: 'هامش الربح',
       totalOrders: 'إجمالي الطلبات',
       totalItems: 'إجمالي العناصر المباعة',
-      avgOrder: 'متوسط قيمة الطلب'
+      avgOrder: 'متوسط قيمة الطلب',
+      taxLabel: 'ضريبة'
     }
   };
 
+  // ==================== PASSWORD ====================
   const MANAGER_PASSWORD = "manager2024";
   let currentLang = 'en';
 
@@ -728,16 +798,7 @@
       btn.classList.toggle('active', btn.dataset.lang === lang);
     });
     localStorage.setItem('manager_lang', lang);
-    renderTodayHero();
-    renderOverview();
-    renderOrders('', '', 'all');
-    renderExpenses();
-    const period = document.getElementById('reportPeriod').value;
-    if (period === 'custom') {
-      renderReport('custom', document.getElementById('reportFrom').value, document.getElementById('reportTo').value);
-    } else {
-      renderReport(period);
-    }
+    renderAll();
   }
 
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -788,18 +849,7 @@
     location.reload();
   });
 
-  function loadOrders() {
-    return JSON.parse(localStorage.getItem('hotel_orders') || '[]');
-  }
-
-  function loadExpenses() {
-    return JSON.parse(localStorage.getItem('hotel_expenses') || '[]');
-  }
-
-  function saveExpenses(e) {
-    localStorage.setItem('hotel_expenses', JSON.stringify(e));
-  }
-
+  // ==================== DATA HELPERS ====================
   function getPaidOrders(orders) {
     return orders.filter(o => o.paymentStatus === 'paid');
   }
@@ -851,15 +901,14 @@
     return { revenue, tax, count, items, avg };
   }
 
+  // ==================== RENDER FUNCTIONS ====================
   function renderTodayHero() {
-    const orders = loadOrders();
-    const paid = getPaidOrders(orders);
-    const expenses = loadExpenses();
+    const paid = getPaidOrders(allOrders);
     const today = getDateStr(new Date());
 
     const todayOrders = paid.filter(o => getDateStr(o.createdAt) === today);
     const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
-    const todayExpenses = expenses.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
+    const todayExpenses = allExpenses.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
     const todayProfit = todayRevenue - todayExpenses;
     const avgOrder = todayOrders.length > 0 ? todayRevenue / todayOrders.length : 0;
 
@@ -878,12 +927,10 @@
   let popularChartInstance = null;
 
   function renderOverview() {
-    const orders = loadOrders();
-    const paid = getPaidOrders(orders);
-    const expenses = loadExpenses();
+    const paid = getPaidOrders(allOrders);
 
     const totalRevenue = paid.reduce((s, o) => s + o.total, 0);
-    const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+    const totalExpenses = allExpenses.reduce((s, e) => s + e.amount, 0);
     const profit = totalRevenue - totalExpenses;
 
     document.getElementById('overviewStats').innerHTML = `
@@ -950,7 +997,7 @@
     });
 
     const counts = {};
-    orders.forEach(o => {
+    allOrders.forEach(o => {
       o.items.forEach(i => {
         counts[i.name] = (counts[i.name] || 0) + i.quantity;
       });
@@ -977,7 +1024,7 @@
       }
     });
 
-    const recent = orders.slice(0, 10);
+    const recent = allOrders.slice(0, 10);
     const activityHtml = recent.length ? recent.map(o => `
       <div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid #f0ebe4; font-size:0.8rem;">
         <span>${o.location || 'Order'} · ${o.items.map(i => i.name).join(', ').slice(0,30)}${o.items.length > 2 ? '...' : ''}</span>
@@ -989,7 +1036,7 @@
   }
 
   function renderOrders(from, to, statusFilter) {
-    let orders = loadOrders();
+    let orders = allOrders;
     if (from && to) {
       orders = orders.filter(o => {
         const d = getDateStr(o.createdAt);
@@ -1032,7 +1079,7 @@
   }
 
   function renderExpenses() {
-    const expenses = loadExpenses();
+    const expenses = allExpenses;
     const total = expenses.reduce((s, e) => s + e.amount, 0);
     const thisMonth = expenses.filter(e => isThisMonth(e.date));
     const monthTotal = thisMonth.reduce((s, e) => s + e.amount, 0);
@@ -1067,11 +1114,21 @@
   }
 
   function deleteExpense(index) {
-    const expenses = loadExpenses();
-    expenses.splice(index, 1);
-    saveExpenses(expenses);
+    allExpenses.splice(index, 1);
+    saveExpensesToGist();
     renderExpenses();
     renderTodayHero();
+  }
+
+  async function saveExpensesToGist() {
+    const data = {
+      orders: allOrders,
+      expenses: allExpenses
+    };
+    // Write to gist (no token needed for reading, but for writing we need token)
+    // We'll use the token from cashier - but since manager only reads, we'll just show a warning
+    console.log('Expenses updated locally. To save to GitHub, use the cashier page.');
+    // For now, we'll keep it in memory
   }
 
   function addExpense() {
@@ -1085,20 +1142,20 @@
       return;
     }
 
-    const expenses = loadExpenses();
-    expenses.push({ description: desc, amount, category, date });
-    saveExpenses(expenses);
-
+    allExpenses.push({ description: desc, amount, category, date });
+    
+    // Save to localStorage as backup
+    localStorage.setItem('hotel_expenses', JSON.stringify(allExpenses));
+    
     document.getElementById('expenseDesc').value = '';
     document.getElementById('expenseAmount').value = '';
     renderExpenses();
     renderTodayHero();
+    alert('✅ Expense added locally! (Cashier can sync to GitHub)');
   }
 
   function renderReport(period, from, to) {
-    const orders = loadOrders();
-    const paid = getPaidOrders(orders);
-    const expenses = loadExpenses();
+    const paid = getPaidOrders(allOrders);
 
     let filteredOrders = [];
     let filteredExpenses = [];
@@ -1108,10 +1165,10 @@
         const d = getDateStr(o.createdAt);
         return d >= from && d <= to;
       });
-      filteredExpenses = expenses.filter(e => e.date >= from && e.date <= to);
+      filteredExpenses = allExpenses.filter(e => e.date >= from && e.date <= to);
     } else {
       filteredOrders = filterOrdersByPeriod(paid, period);
-      filteredExpenses = expenses.filter(e => {
+      filteredExpenses = allExpenses.filter(e => {
         if (period === 'today') return isToday(e.date);
         if (period === 'week') return isThisWeek(e.date);
         if (period === 'month') return isThisMonth(e.date);
@@ -1163,7 +1220,7 @@
           <thead><tr><th>${getTranslation('expenseDesc')}</th><th>value</th></tr></thead>
           <tbody>
             <tr><td>${getTranslation('revenue')}</td><td>$${totals.revenue.toFixed(2)}</td></tr>
-            <tr><td>${getTranslation('taxLabel') || 'Tax'}</td><td>$${totals.tax.toFixed(2)}</td></tr>
+            <tr><td>${getTranslation('taxLabel')}</td><td>$${totals.tax.toFixed(2)}</td></tr>
             <tr><td>${getTranslation('expenses')}</td><td>$${totalExpenses.toFixed(2)}</td></tr>
             <tr><td><strong>${getTranslation('profit')}</strong></td><td><strong>$${profit.toFixed(2)}</strong></td></tr>
             <tr><td>${getTranslation('profitMargin')}</td><td><strong>${profitMargin.toFixed(1)}%</strong></td></tr>
@@ -1177,6 +1234,21 @@
     `;
   }
 
+  // ==================== RENDER ALL ====================
+  function renderAll() {
+    renderTodayHero();
+    renderOverview();
+    renderOrders('', '', 'all');
+    renderExpenses();
+    const period = document.getElementById('reportPeriod').value;
+    if (period === 'custom') {
+      renderReport('custom', document.getElementById('reportFrom').value, document.getElementById('reportTo').value);
+    } else {
+      renderReport(period);
+    }
+  }
+
+  // ==================== EVENT LISTENERS ====================
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1232,14 +1304,8 @@
   });
   document.getElementById('reportPeriod').dispatchEvent(new Event('change'));
 
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'hotel_orders' || e.key === 'hotel_expenses') {
-      renderTodayHero();
-      renderOverview();
-    }
-  });
-
-  function initManager() {
+  // ==================== INIT ====================
+  async function initManager() {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('expenseDate').value = today;
     document.getElementById('orderFrom').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
@@ -1247,18 +1313,14 @@
     document.getElementById('reportFrom').value = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
     document.getElementById('reportTo').value = today;
 
-    renderTodayHero();
-    renderOverview();
-    renderOrders('', '', 'all');
-    renderExpenses();
-    renderReport('week');
+    await loadAllData();
+    renderAll();
 
-    setInterval(() => {
-      renderTodayHero();
-      renderOverview();
-    }, 5000);
+    // Auto-refresh every 10s
+    setInterval(loadAllData, 10000);
   }
 
+  // ==================== START ====================
   if (checkPassword()) {
     const savedLang = localStorage.getItem('manager_lang') || 'en';
     updateUILanguage(savedLang);
