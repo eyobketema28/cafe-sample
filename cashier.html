@@ -96,6 +96,7 @@
       border-radius: 0;
       font-family: 'Georgia', serif;
       letter-spacing: 1px;
+      cursor: pointer;
     }
     .sync-status.synced { color: #2a7a4a; }
     .sync-status.syncing { color: #c9a96e; }
@@ -467,7 +468,7 @@
 <div class="header" id="mainHeader" style="display:none;">
   <div class="logo"><h2>THE <span>MONOCHROME</span> · <span style="font-size:0.7rem;letter-spacing:2px;color:#888;" data-key="cashierLabel">cashier</span></h2></div>
   <div class="header-actions">
-    <span class="sync-status synced" id="syncStatus">● synced</span>
+    <span class="sync-status synced" id="syncStatus" title="Click to test connection">● synced</span>
     <div class="lang-selector">
       <button class="lang-btn active" data-lang="en">EN</button>
       <button class="lang-btn" data-lang="am">አማ</button>
@@ -522,7 +523,6 @@
 
 <script>
   // ==================== GITHUB CONFIG ====================
-  // ✅ YOUR CREDENTIALS ARE ALREADY SET:
   const GIST_ID = "d2b5c83247826caa343349cca52b6313";
   const GITHUB_TOKEN = "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";
   const GIST_FILENAME = "monochrome_data.json";
@@ -543,14 +543,40 @@
     }
   }
 
+  async function testConnection() {
+    try {
+      setSyncStatus('syncing', 'testing...');
+      const url = `https://api.github.com/gists/${GIST_ID}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        setSyncStatus('synced', 'connected');
+        return true;
+      } else {
+        setSyncStatus('error', 'status: ' + response.status);
+        return false;
+      }
+    } catch (e) {
+      setSyncStatus('error', 'network error');
+      return false;
+    }
+  }
+
   async function readFromGist() {
     try {
       const url = `https://api.github.com/gists/${GIST_ID}`;
       const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to read gist');
+      if (!response.ok) {
+        console.error('Read failed with status:', response.status);
+        throw new Error('Failed to read gist: ' + response.status);
+      }
       const data = await response.json();
       const content = data.files[GIST_FILENAME]?.content;
-      if (!content) throw new Error('File not found');
+      if (!content) {
+        // File doesn't exist yet, create it
+        const defaultData = { orders: [], expenses: [] };
+        await writeToGist(defaultData);
+        return defaultData;
+      }
       return JSON.parse(content);
     } catch (error) {
       console.error('Read error:', error);
@@ -570,20 +596,43 @@
           }
         }
       };
+      
+      console.log('Saving to GitHub...');
+      console.log('Gist ID:', GIST_ID);
+      console.log('Token starts with:', GITHUB_TOKEN.substring(0, 8) + '...');
+      
       const response = await fetch(url, {
         method: 'PATCH',
         headers: {
           'Authorization': `token ${GITHUB_TOKEN}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
         },
         body: JSON.stringify(payload)
       });
-      if (!response.ok) throw new Error('Failed to save');
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        
+        let errorMessage = 'Failed to save';
+        if (response.status === 401) errorMessage = 'Invalid token';
+        else if (response.status === 403) errorMessage = 'Token lacks permission (need "gist" scope)';
+        else if (response.status === 404) errorMessage = 'Gist not found (check Gist ID)';
+        else if (response.status === 422) errorMessage = 'Gist is empty or invalid';
+        
+        setSyncStatus('error', errorMessage);
+        throw new Error(errorMessage + ' (Status: ' + response.status + ')');
+      }
+
       setSyncStatus('synced', 'saved');
+      console.log('✅ Successfully saved to GitHub!');
       return true;
     } catch (error) {
       console.error('Write error:', error);
-      setSyncStatus('error', 'save failed');
+      setSyncStatus('error', error.message);
       return false;
     }
   }
@@ -597,6 +646,18 @@
     if (data) {
       allOrders = data.orders || [];
       allExpenses = data.expenses || [];
+      setSyncStatus('synced', 'loaded');
+    } else {
+      // Try localStorage as fallback
+      const localData = localStorage.getItem('hotel_orders_backup');
+      if (localData) {
+        try {
+          const parsed = JSON.parse(localData);
+          allOrders = parsed.orders || [];
+          allExpenses = parsed.expenses || [];
+          setSyncStatus('error', 'using local backup');
+        } catch (e) {}
+      }
     }
     renderStats();
     return data;
@@ -607,6 +668,11 @@
       orders: allOrders,
       expenses: allExpenses
     };
+    
+    // Backup to localStorage
+    localStorage.setItem('hotel_orders_backup', JSON.stringify(data));
+    
+    // Save to GitHub
     return await writeToGist(data);
   }
 
@@ -744,6 +810,9 @@
       updateUILanguage(btn.dataset.lang);
     });
   });
+
+  // Click status to test connection
+  document.getElementById('syncStatus').addEventListener('click', testConnection);
 
   function checkPassword() {
     const overlay = document.getElementById('passwordOverlay');
@@ -1027,9 +1096,9 @@ ${getTranslation('receiptThankYou')}
       alert(receipt);
       clearCart();
     } else {
-      alert('❌ Failed to save order to GitHub. Please check your internet and try again.');
-      // Remove from local array if save failed
-      allOrders.shift();
+      // Order is still saved locally even if GitHub fails
+      alert('⚠️ Order saved locally, but GitHub sync failed. Data is backed up in your browser.');
+      clearCart();
     }
 
     btn.className = 'order-btn';
@@ -1061,8 +1130,10 @@ ${getTranslation('receiptThankYou')}
     loadCart();
     await loadAllData();
     renderAll();
-    // Auto-refresh stats every 10s
-    setInterval(loadAllData, 10000);
+    // Test connection on load
+    await testConnection();
+    // Auto-refresh every 15s
+    setInterval(loadAllData, 15000);
   }
 
   // ==================== EVENT LISTENERS ====================
