@@ -522,12 +522,12 @@
 </div>
 
 <script>
-  // ==================== GITHUB CONFIG ====================
-  const GIST_ID = "d2b5c83247826caa343349cca52b6313";
-  const GITHUB_TOKEN = "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";
-  const GIST_FILENAME = "monochrome_data.json";
+  // ==================== JSONBIN.IO CONFIG ====================
+  // 🔑 REPLACE THESE WITH YOUR VALUES:
+  const JSONBIN_BIN_ID = "6a6a071bf5f4af5e29d16d67"; // e.g., "abcdef123456"
+  const JSONBIN_MASTER_KEY = "$2a$10$.oOBTbpOsTKbbBf6qQOuruZnI2o3Z0yJq88kx4EO9blC/5e1.rsSe"; // from API Keys page
 
-  // ==================== SIMPLIFIED GITHUB SYNC ====================
+  // ==================== JSONBIN.IO FUNCTIONS ====================
   function setSyncStatus(status, message) {
     const el = document.getElementById('syncStatus');
     if (!el) return;
@@ -543,70 +543,59 @@
     }
   }
 
-  // Function to get current Gist content
-  async function getGistContent() {
+  async function loadFromJSONBin() {
     try {
-      const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-      if (!response.ok) throw new Error('Failed to fetch');
-      const data = await response.json();
-      const content = data.files[GIST_FILENAME]?.content;
-      if (content) {
-        return JSON.parse(content);
+      setSyncStatus('syncing', 'loading...');
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+        headers: {
+          'X-Master-Key': JSONBIN_MASTER_KEY
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Status ${response.status}: ${errorText}`);
       }
+      
+      const data = await response.json();
+      const record = data.record;
+      
+      if (record && typeof record === 'object') {
+        setSyncStatus('synced', 'loaded');
+        return record;
+      }
+      
       return { orders: [], expenses: [] };
-    } catch (e) {
-      console.error('Get error:', e);
+    } catch (error) {
+      console.error('Load error:', error);
+      setSyncStatus('error', 'load failed');
       return null;
     }
   }
 
-  // Function to update Gist content using PUT (more reliable)
-  async function updateGistContent(data) {
+  async function saveToJSONBin(data) {
     try {
       setSyncStatus('syncing', 'saving...');
       
-      // First, get the current gist to get the file SHA
-      const getResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-      if (!getResponse.ok) throw new Error('Failed to fetch gist');
-      const gistData = await getResponse.json();
-      const fileSha = gistData.files[GIST_FILENAME]?.sha;
-
-      // Prepare the update
-      const url = `https://api.github.com/gists/${GIST_ID}`;
-      const payload = {
-        files: {
-          [GIST_FILENAME]: {
-            content: JSON.stringify(data, null, 2)
-          }
-        }
-      };
-
-      // Add SHA if file exists (for update)
-      if (fileSha) {
-        payload.files[GIST_FILENAME].sha = fileSha;
-      }
-
-      const response = await fetch(url, {
-        method: 'PATCH',
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+        method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${GITHUB_TOKEN}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/vnd.github.v3+json'
+          'X-Master-Key': JSONBIN_MASTER_KEY
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(data)
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('GitHub error:', errorText);
         throw new Error(`Status ${response.status}: ${errorText}`);
       }
 
-      setSyncStatus('synced', 'saved');
+      setSyncStatus('synced', 'saved ✅');
       return true;
     } catch (error) {
-      console.error('Update error:', error);
-      setSyncStatus('error', error.message);
+      console.error('Save error:', error);
+      setSyncStatus('error', 'save failed');
       return false;
     }
   }
@@ -617,11 +606,10 @@
 
   async function loadAllData() {
     try {
-      const data = await getGistContent();
+      const data = await loadFromJSONBin();
       if (data) {
         allOrders = data.orders || [];
         allExpenses = data.expenses || [];
-        setSyncStatus('synced', 'loaded');
       } else {
         // Try localStorage fallback
         const localData = localStorage.getItem('hotel_orders_backup');
@@ -629,7 +617,7 @@
           const parsed = JSON.parse(localData);
           allOrders = parsed.orders || [];
           allExpenses = parsed.expenses || [];
-          setSyncStatus('error', 'using local backup');
+          setSyncStatus('error', 'using backup');
         }
       }
     } catch (e) {
@@ -647,8 +635,8 @@
     // Always backup to localStorage
     localStorage.setItem('hotel_orders_backup', JSON.stringify(data));
     
-    // Try to save to GitHub
-    const result = await updateGistContent(data);
+    // Try to save to JSONBin
+    const result = await saveToJSONBin(data);
     return result;
   }
 
@@ -791,13 +779,13 @@
   document.getElementById('syncStatus').addEventListener('click', async () => {
     setSyncStatus('syncing', 'testing...');
     try {
-      const data = await getGistContent();
+      const data = await loadFromJSONBin();
       if (data) {
         setSyncStatus('synced', 'connected ✅');
-        alert('✅ Connection successful! Gist is accessible.');
+        alert('✅ Connection successful! Data loaded.');
       } else {
         setSyncStatus('error', 'no data');
-        alert('❌ Connection failed. Check Gist ID.');
+        alert('❌ Connection failed. Check your Bin ID and Key.');
       }
     } catch (e) {
       setSyncStatus('error', 'test failed');
@@ -1062,7 +1050,7 @@
     // Add to local array
     allOrders.unshift(order);
 
-    // Save to GitHub
+    // Save to JSONBin
     const btn = document.getElementById('placeOrderBtn');
     btn.disabled = true;
     btn.textContent = '⟳ saving...';
@@ -1087,8 +1075,7 @@ ${getTranslation('receiptThankYou')}
       alert(receipt);
       clearCart();
     } else {
-      // Order is still saved locally even if GitHub fails
-      alert('⚠️ Order saved locally! GitHub sync failed. Data is backed up in your browser.');
+      alert('⚠️ Order saved locally! Cloud sync failed. Data is backed up.');
       clearCart();
     }
 
