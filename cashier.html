@@ -523,9 +523,9 @@
 
 <script>
   // ==================== JSONBIN.IO CONFIG ====================
-  // 🔑 REPLACE THESE WITH YOUR VALUES:
-  const JSONBIN_BIN_ID = "6a6a071bf5f4af5e29d16d67"; // e.g., "abcdef123456"
-  const JSONBIN_MASTER_KEY = "$2a$10$.oOBTbpOsTKbbBf6qQOuruZnI2o3Z0yJq88kx4EO9blC/5e1.rsSe"; // from API Keys page
+  // ✅ YOUR CREDENTIALS ARE ALREADY SET:
+  const JSONBIN_BIN_ID = "6a6a071bf5f4af5e29d16d67";
+  const JSONBIN_MASTER_KEY = "$2a$10$.oOBTbpOsTKbbBf6qQOuruZnI2o3Z0yJq88kx4EO9blC/5e1.rsSe";
 
   // ==================== JSONBIN.IO FUNCTIONS ====================
   function setSyncStatus(status, message) {
@@ -554,6 +554,7 @@
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('Load error:', errorText);
         throw new Error(`Status ${response.status}: ${errorText}`);
       }
       
@@ -561,7 +562,7 @@
       const record = data.record;
       
       if (record && typeof record === 'object') {
-        setSyncStatus('synced', 'loaded');
+        setSyncStatus('synced', 'loaded ✅');
         return record;
       }
       
@@ -588,6 +589,7 @@
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('Save error:', errorText);
         throw new Error(`Status ${response.status}: ${errorText}`);
       }
 
@@ -782,7 +784,7 @@
       const data = await loadFromJSONBin();
       if (data) {
         setSyncStatus('synced', 'connected ✅');
-        alert('✅ Connection successful! Data loaded.');
+        alert('✅ Connection successful! Data loaded from JSONBin.');
       } else {
         setSyncStatus('error', 'no data');
         alert('❌ Connection failed. Check your Bin ID and Key.');
@@ -1075,7 +1077,7 @@ ${getTranslation('receiptThankYou')}
       alert(receipt);
       clearCart();
     } else {
-      alert('⚠️ Order saved locally! Cloud sync failed. Data is backed up.');
+      alert('⚠️ Order saved locally! Cloud sync failed. Data is backed up in your browser.');
       clearCart();
     }
 
