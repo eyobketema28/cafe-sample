@@ -578,14 +578,20 @@
       const data = await response.json();
       const record = data.record;
       
+      console.log('📦 Raw data from JSONBin:', record);
+      
       if (record && typeof record === 'object') {
-        setSyncStatus('synced', 'loaded ✅');
+        // Make sure we have orders array
+        if (!record.orders) record.orders = [];
+        if (!record.expenses) record.expenses = [];
+        
+        setSyncStatus('synced', `loaded ${record.orders.length} orders`);
         return record;
       }
       
       return { orders: [], expenses: [] };
     } catch (error) {
-      console.error('Load error:', error);
+      console.error('❌ Load error:', error);
       setSyncStatus('error', 'load failed');
       return null;
     }
@@ -601,7 +607,8 @@
       if (data) {
         allOrders = data.orders || [];
         allExpenses = data.expenses || [];
-        console.log('✅ Loaded', allOrders.length, 'orders');
+        console.log('✅ Loaded', allOrders.length, 'orders from JSONBin');
+        console.log('📋 Orders:', allOrders);
       } else {
         // Try localStorage fallback
         const localData = localStorage.getItem('hotel_orders_backup');
@@ -609,11 +616,18 @@
           const parsed = JSON.parse(localData);
           allOrders = parsed.orders || [];
           allExpenses = parsed.expenses || [];
+          console.log('📦 Using backup data:', allOrders.length, 'orders');
           setSyncStatus('error', 'using backup');
+        } else {
+          allOrders = [];
+          allExpenses = [];
+          console.log('⚠️ No data found');
         }
       }
     } catch (e) {
-      console.error('Load error:', e);
+      console.error('❌ Load error:', e);
+      allOrders = [];
+      allExpenses = [];
     }
     renderAll();
   }
@@ -839,8 +853,11 @@
     try {
       const data = await loadFromJSONBin();
       if (data) {
-        setSyncStatus('synced', 'connected ✅');
-        alert(`✅ Connection successful! ${data.orders?.length || 0} orders loaded.`);
+        setSyncStatus('synced', `connected ✅ ${data.orders?.length || 0} orders`);
+        alert(`✅ Connection successful!\n📦 Orders: ${data.orders?.length || 0}\n💰 Expenses: ${data.expenses?.length || 0}`);
+        allOrders = data.orders || [];
+        allExpenses = data.expenses || [];
+        renderAll();
       } else {
         setSyncStatus('error', 'no data');
         alert('❌ Connection failed. Check your Bin ID and Key.');
