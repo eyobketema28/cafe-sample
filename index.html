@@ -200,10 +200,27 @@
     }
     .menu-img {
       background: #faf8f5;
-      padding: 1.5rem;
-      text-align: center;
-      font-size: 3rem;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
       border-bottom: 1px solid #f0ebe4;
+      position: relative;
+    }
+    .menu-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .menu-card:hover .menu-img img {
+      transform: scale(1.05);
+    }
+    .menu-img .no-image {
+      font-size: 3rem;
+      color: #ccc;
+      opacity: 0.5;
     }
     .menu-info {
       padding: 1.2rem 1.2rem 1.5rem;
@@ -282,6 +299,7 @@
       .logo h1 { font-size: 1.2rem; letter-spacing: 2px; }
       .section-title { font-size: 1.3rem; }
       .admin-bar a { padding: 0.4rem 1rem; font-size: 0.6rem; margin: 0.3rem; }
+      .menu-img { height: 150px; }
     }
   </style>
 </head>
@@ -328,6 +346,7 @@
 </div>
 
 <script>
+  // ==================== TRANSLATIONS ====================
   const translations = {
     en: {
       menuTitle: '◈ <span>tonight\'s</span> menu',
@@ -394,21 +413,23 @@
     }
   };
 
+  // ==================== MENU DATA ====================
   const MENU = [
-    { id: "m1", name: "black truffle fries", price: 7.9, description: "crispy, parmesan, truffle oil", emoji: "🍟", category: "snacks" },
-    { id: "m2", name: "caesar salad", price: 9.5, description: "romaine, parmesan, house dressing", emoji: "🥗", category: "fresh" },
-    { id: "m3", name: "grilled salmon", price: 26.5, description: "lemon butter, seasonal vegetables", emoji: "🐟", category: "mains" },
-    { id: "m4", name: "classic burger", price: 18.9, description: "angus beef, cheddar, house sauce", emoji: "🍔", category: "mains" },
-    { id: "m5", name: "margherita pizza", price: 15.5, description: "tomato, mozzarella, basil", emoji: "🍕", category: "mains" },
-    { id: "m6", name: "cheesecake", price: 7.5, description: "new york style, berry compote", emoji: "🍰", category: "sweets" },
-    { id: "m7", name: "dark chocolate cake", price: 8.5, description: "warm, with vanilla ice cream", emoji: "🍫", category: "sweets" },
-    { id: "m8", name: "fresh orange juice", price: 4.5, description: "cold pressed", emoji: "🍊", category: "drinks" },
-    { id: "m9", name: "cappuccino", price: 4.2, description: "arabica roast", emoji: "☕", category: "drinks" },
-    { id: "m10", name: "negroni", price: 11.0, description: "campari, gin, vermouth", emoji: "🥃", category: "cocktails" }
+    { id: "m1", name: "black truffle fries", price: 7.9, description: "crispy, parmesan, truffle oil", emoji: "🍟", category: "snacks", image: "black-truffle-fries.png" },
+    { id: "m2", name: "caesar salad", price: 9.5, description: "romaine, parmesan, house dressing", emoji: "🥗", category: "fresh", image: "caesar-salad.png" },
+    { id: "m3", name: "grilled salmon", price: 26.5, description: "lemon butter, seasonal vegetables", emoji: "🐟", category: "mains", image: "grilled-salmon.png" },
+    { id: "m4", name: "classic burger", price: 18.9, description: "angus beef, cheddar, house sauce", emoji: "🍔", category: "mains", image: "classic-burger.png" },
+    { id: "m5", name: "margherita pizza", price: 15.5, description: "tomato, mozzarella, basil", emoji: "🍕", category: "mains", image: "margherita-pizza.png" },
+    { id: "m6", name: "cheesecake", price: 7.5, description: "new york style, berry compote", emoji: "🍰", category: "sweets", image: "cheesecake.png" },
+    { id: "m7", name: "dark chocolate cake", price: 8.5, description: "warm, with vanilla ice cream", emoji: "🍫", category: "sweets", image: "dark-chocolate-cake.png" },
+    { id: "m8", name: "fresh orange juice", price: 4.5, description: "cold pressed", emoji: "🍊", category: "drinks", image: "fresh-orange-juice.png" },
+    { id: "m9", name: "cappuccino", price: 4.2, description: "arabica roast", emoji: "☕", category: "drinks", image: "cappuccino.png" },
+    { id: "m10", name: "negroni", price: 11.0, description: "campari, gin, vermouth", emoji: "🥃", category: "cocktails", image: "negroni.png" }
   ];
 
   let currentLang = 'en';
 
+  // ==================== RENDER MENU ====================
   function renderMenu(lang) {
     const grid = document.getElementById("menuGrid");
     if (!grid) return;
@@ -416,10 +437,21 @@
     grid.innerHTML = "";
     MENU.forEach(item => {
       const translatedName = t.menuItems[item.name] || item.name;
+      const imagePath = `images/${item.image}`;
+      
       const card = document.createElement("div");
       card.className = "menu-card";
+      
+      // Image HTML with fallback
+      const imageHtml = `
+        <div class="menu-img">
+          <img src="${imagePath}" alt="${translatedName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="no-image" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; align-items:center; justify-content:center;">${item.emoji}</div>
+        </div>
+      `;
+      
       card.innerHTML = `
-        <div class="menu-img">${item.emoji}</div>
+        ${imageHtml}
         <div class="menu-info">
           <div class="menu-title">
             <span>${translatedName}</span>
@@ -433,6 +465,7 @@
     });
   }
 
+  // ==================== SLIDESHOW ====================
   let currentSlide = 0;
   const slides = document.querySelectorAll('.slide');
   const totalSlides = slides.length;
@@ -462,6 +495,7 @@
   document.getElementById('prevSlide').addEventListener('click', () => { clearInterval(autoInterval); prevSlide(); autoInterval = setInterval(nextSlide, 5000); });
   document.getElementById('nextSlide').addEventListener('click', () => { clearInterval(autoInterval); nextSlide(); autoInterval = setInterval(nextSlide, 5000); });
 
+  // ==================== LANGUAGE SWITCHER ====================
   function updateLanguage(lang) {
     currentLang = lang;
     const t = translations[lang] || translations.en;
@@ -482,6 +516,7 @@
     btn.addEventListener('click', () => { updateLanguage(btn.dataset.lang); });
   });
 
+  // ==================== INIT ====================
   const savedLang = localStorage.getItem('monochrome_lang') || 'en';
   updateLanguage(savedLang);
 
